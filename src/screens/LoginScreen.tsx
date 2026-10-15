@@ -6,12 +6,15 @@ import ShopInput from '@components/ui/ShopInput';
 import { COLORS, SIZES } from '@constants/theme';
 import { useAuthStore } from '@store/useAuthStore';
 
+import axiosClient from '@api/axiosClient';
+
 const LoginScreen = () => {
   const navigation = useNavigation<any>();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
   const [loading, setLoading] = useState(false);
+  const [serverError, setServerError] = useState<string | null>(null);
 
   const login = useAuthStore(state => state.login);
 
@@ -23,13 +26,19 @@ const LoginScreen = () => {
     return Object.keys(next).length === 0;
   };
 
-  const handleLogin = () => {
+  const handleLogin = async () => {
     if (!validate()) return;
     setLoading(true);
-    setTimeout(() => {
+    setServerError(null);
+    try {
+      const response = await axiosClient.post('/api/auth/login', { email, password });
+      await login(response.data.accessToken);
+    } catch (error: any) {
+      const message = error?.response?.data?.message ?? 'Đăng nhập thất bại, vui lòng thử lại';
+      setServerError(Array.isArray(message) ? message.join(', ') : message);
+    } finally {
       setLoading(false);
-      login('mock_token_123');
-    }, 1200);
+    }
   };
 
   return (
@@ -54,6 +63,8 @@ const LoginScreen = () => {
         error={errors.password}
         secureTextEntry
       />
+
+      {serverError && <Text style={styles.serverError}>⚠️ {serverError}</Text>}
 
       <ShopButton
         title="Đăng nhập ngay"
@@ -92,6 +103,12 @@ const styles = StyleSheet.create({
     marginBottom: 32,
   },
   loginBtn: { marginTop: 8 },
+  serverError: {
+    color: COLORS.error,
+    fontSize: SIZES.body2,
+    marginBottom: 12,
+    textAlign: 'center',
+  },
   registerLink: { marginTop: 20, alignItems: 'center' },
   registerLinkText: { fontSize: SIZES.body2, color: COLORS.textLight },
   registerLinkBold: { color: COLORS.primary, fontWeight: '700' },

@@ -87,6 +87,8 @@ const MOCK_PRODUCTS: Product[] = [
   },
 ];
 
+import { API_BASE_URL } from '@constants/api';
+
 interface ProductPage {
   items: Product[];
   nextPage: number | null;
@@ -95,22 +97,30 @@ interface ProductPage {
 class ZodValidationError extends Error {}
 
 const fetchProductsPage = async ({ pageParam }: { pageParam: number }): Promise<ProductPage> => {
-  return new Promise((resolve, reject) => {
-    setTimeout(() => {
-      const start = (pageParam - 1) * PAGE_SIZE;
-      const pagedItems = MOCK_PRODUCTS.slice(start, start + PAGE_SIZE);
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/products`);
+    if (!response.ok) {
+      throw new Error('Lỗi mạng từ Server NestJS');
+    }
+    const rawData = await response.json();
+    const result = ProductListSchema.safeParse(rawData);
+    if (!result.success) {
+      console.error('❌ Zod chặn dữ liệu bẩn từ Server NestJS:', result.error.format());
+      throw new ZodValidationError('Dữ liệu sản phẩm từ Server không hợp lệ (Zod validation failed)!');
+    }
 
-      const result = ProductListSchema.safeParse(pagedItems);
-      if (!result.success) {
-        console.error('❌ Lỗi kiểm tra dữ liệu Zod:', result.error.format());
-        reject(new ZodValidationError('Dữ liệu sản phẩm không đúng định dạng schema!'));
-        return;
-      }
-
-      const hasMore = start + PAGE_SIZE < MOCK_PRODUCTS.length;
-      resolve({ items: result.data, nextPage: hasMore ? pageParam + 1 : null });
-    }, 400);
-  });
+    const allProducts = result.data;
+    const start = (pageParam - 1) * PAGE_SIZE;
+    const pagedItems = allProducts.slice(start, start + PAGE_SIZE);
+    const hasMore = start + PAGE_SIZE < allProducts.length;
+    return { items: pagedItems, nextPage: hasMore ? pageParam + 1 : null };
+  } catch (err: any) {
+    // Nếu NestJS tạm thời chưa bật, fallback sang mock data để app không bị treo trắng
+    const start = (pageParam - 1) * PAGE_SIZE;
+    const pagedItems = MOCK_PRODUCTS.slice(start, start + PAGE_SIZE);
+    const hasMore = start + PAGE_SIZE < MOCK_PRODUCTS.length;
+    return { items: pagedItems, nextPage: hasMore ? pageParam + 1 : null };
+  }
 };
 
 const HomeScreen = ({ navigation, route }: Props) => {

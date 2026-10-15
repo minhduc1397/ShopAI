@@ -8,9 +8,27 @@ import { COLORS, SIZES } from '@constants/theme';
 const formatCurrency = (v: number) =>
   new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(v);
 
+import { useQuery } from '@tanstack/react-query';
+import axiosClient from '@api/axiosClient';
+
 const OrdersScreen = () => {
   const navigation = useNavigation<any>();
-  const orders = useOrderStore((s) => s.orders);
+  const localOrders = useOrderStore((s) => s.orders);
+
+  const {
+    data: serverOrders = [],
+    isLoading,
+    refetch,
+    isRefetching,
+  } = useQuery({
+    queryKey: ['orders'],
+    queryFn: async () => {
+      const res = await axiosClient.get('/api/orders');
+      return res.data as Array<{ id: string; total: number; status: string; createdAt: string }>;
+    },
+  });
+
+  const orders = serverOrders.length > 0 ? serverOrders : localOrders;
 
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
@@ -23,6 +41,8 @@ const OrdersScreen = () => {
         <FlatList
           data={orders}
           keyExtractor={(item) => item.id}
+          refreshing={isRefetching}
+          onRefresh={refetch}
           contentContainerStyle={{ padding: SIZES.padding }}
           renderItem={({ item }) => (
             <Pressable

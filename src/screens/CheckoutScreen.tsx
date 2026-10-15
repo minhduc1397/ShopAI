@@ -22,10 +22,14 @@ interface CreateOrderResponse {
   status: 'PENDING';
 }
 
-// Giả lập Server tạo đơn hàng ở Chương 6 (Chương 9 sẽ đổi thành axiosClient.post)
-const createOrderLocal = async (payload: CreateOrderPayload): Promise<CreateOrderResponse> => {
-  await new Promise<void>((resolve) => setTimeout(() => resolve(), 1200));
-  return { orderId: `ORD-${Date.now()}`, status: 'PENDING' };
+import axiosClient from '@api/axiosClient';
+
+const placeOrderAPI = async (items: CartItem[], total: number) => {
+  const response = await axiosClient.post('/api/orders', {
+    items: items.map((item) => ({ productId: item.id, quantity: item.quantity })),
+    total,
+  });
+  return response.data;
 };
 
 const CheckoutScreen = () => {
@@ -41,29 +45,30 @@ const CheckoutScreen = () => {
 
   const addOrder = useOrderStore((state) => state.addOrder);
 
-  const { mutate, isPending, isError, isSuccess, data } = useMutation({
-    mutationFn: createOrderLocal,
-    onSuccess: (res) => {
+  const { mutate, isPending, isError, error, isSuccess, data } = useMutation({
+    mutationFn: () => placeOrderAPI(items, totalPrice),
+    onSuccess: (order: any) => {
       // Ghi nhận đơn hàng vào Zustand Store với trạng thái PENDING
       addOrder({
-        id: res.orderId,
+        id: order.id,
         items: [...items],
-        total: totalPrice,
-        status: 'PENDING',
-        createdAt: new Date().toISOString(),
+        total: order.total ?? totalPrice,
+        status: (order.status as any) ?? 'PENDING',
+        createdAt: order.createdAt ?? new Date().toISOString(),
       });
 
-      clearCart(); // Xóa sạch giỏ hàng
-      queryClient.invalidateQueries({ queryKey: ['productsInfinite'] }); // Làm mới cache sản phẩm
-      setTimeout(() => navigation.goBack(), 1500); // Tự động đóng Modal sau 1.5 giây
+      clearCart(); // CHỈ xóa giỏ SAU KHI Server xác nhận thành công
+      queryClient.invalidateQueries({ queryKey: ['orders'] });
+      queryClient.invalidateQueries({ queryKey: ['productsInfinite'] });
+      setTimeout(() => navigation.goBack(), 1500);
     },
-    onError: (err) => {
-      console.error('❌ Đặt hàng thất bại:', err);
+    onError: (err: any) => {
+      console.error('❌ Đặt hàng thất bại:', err?.response?.data || err);
     },
   });
 
   const handleConfirm = () => {
-    mutate({ items, totalPrice });
+    mutate();
   };
 
   if (isSuccess) {
@@ -72,7 +77,7 @@ const CheckoutScreen = () => {
         <View style={styles.center}>
           <Text style={styles.successIcon}>✅</Text>
           <Text style={styles.successText}>Đặt hàng thành công!</Text>
-          <Text style={styles.orderDetailText}>Mã đơn: {data?.orderId}</Text>
+          <Text style={styles.orderDetailText}>Mã đơn: {data?.id || data?.orderId}</Text>
           <Text style={styles.statusText}>Trạng thái: PENDING (chờ thanh toán)</Text>
         </View>
       </SafeAreaView>
@@ -94,7 +99,9 @@ const CheckoutScreen = () => {
         </View>
 
         {isError && (
-          <Text style={styles.errorText}>Đặt hàng thất bại — vui lòng thử lại!</Text>
+          <Text style={styles.errorText}>
+            {(error as any)?.response?.data?.message || 'Đặt hàng thất bại — vui lòng thử lại!'}
+          </Text>
         )}
 
         {isPending ? (

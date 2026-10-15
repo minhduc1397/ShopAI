@@ -12,10 +12,37 @@ type Props = NativeStackScreenProps<RootStackParamList, 'OrderDetail'>;
 const formatCurrency = (v: number) =>
   new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(v);
 
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import axiosClient from '@api/axiosClient';
+
 const OrderDetailScreen = ({ route }: Props) => {
   const { orderId } = route.params;
-  const order = useOrderStore((s) => s.getById(orderId));
+  const queryClient = useQueryClient();
+  const localOrder = useOrderStore((s) => s.getById(orderId));
   const markPaid = useOrderStore((s) => s.markPaid);
+
+  const { data: serverOrder, isLoading } = useQuery({
+    queryKey: ['order', orderId],
+    queryFn: async () => {
+      const res = await axiosClient.get(`/api/orders/${orderId}`);
+      return res.data;
+    },
+    placeholderData: localOrder,
+  });
+
+  const payMutation = useMutation({
+    mutationFn: async () => {
+      const res = await axiosClient.post(`/api/orders/${orderId}/pay`);
+      return res.data;
+    },
+    onSuccess: () => {
+      markPaid(orderId);
+      queryClient.invalidateQueries({ queryKey: ['order', orderId] });
+      queryClient.invalidateQueries({ queryKey: ['orders'] });
+    },
+  });
+
+  const order = serverOrder ?? localOrder;
 
   if (!order) {
     return (
@@ -24,6 +51,8 @@ const OrderDetailScreen = ({ route }: Props) => {
       </SafeAreaView>
     );
   }
+
+  const items = order.items ?? [];
 
   return (
     <SafeAreaView style={styles.safe} edges={['bottom']}>
@@ -34,10 +63,10 @@ const OrderDetailScreen = ({ route }: Props) => {
         <Text style={styles.row}>Ngày: {new Date(order.createdAt).toLocaleString('vi-VN')}</Text>
 
         <Text style={[styles.heading, { marginTop: 20 }]}>Chi tiết</Text>
-        {order.items.map((it) => (
-          <View key={it.id} style={styles.itemRow}>
-            <Text style={{ flex: 1 }}>{it.name} × {it.quantity}</Text>
-            <Text>{formatCurrency(it.price * it.quantity)}</Text>
+        {items.map((it: any) => (
+          <View key={it.id || it.productId} style={styles.itemRow}>
+            <Text style={{ flex: 1 }}>{it.name || it.product?.name || it.productId} × {it.quantity}</Text>
+            <Text>{formatCurrency((it.price ?? it.product?.price ?? 0) * it.quantity)}</Text>
           </View>
         ))}
 
@@ -45,8 +74,9 @@ const OrderDetailScreen = ({ route }: Props) => {
 
         {order.status === 'PENDING' ? (
           <ShopButton
-            title="Thanh toán giả lập (→ PAID)"
-            onPress={() => markPaid(order.id)}
+            title={payMutation.isPending ? 'Đang thanh toán...' : 'Thanh toán giả lập (→ PAID)'}
+            onPress={() => payMutation.mutate()}
+            isLoading={payMutation.isPending}
             style={{ marginTop: 24 }}
           />
         ) : (

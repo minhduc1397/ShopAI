@@ -6,6 +6,8 @@ import ShopInput from '@components/ui/ShopInput';
 import { COLORS, SIZES } from '@constants/theme';
 import { useAuthStore } from '@store/useAuthStore';
 
+import axiosClient from '@api/axiosClient';
+
 const RegisterScreen = () => {
   const navigation = useNavigation<any>();
   const login = useAuthStore(state => state.login);
@@ -21,6 +23,7 @@ const RegisterScreen = () => {
     confirm?: string;
   }>({});
   const [loading, setLoading] = useState(false);
+  const [serverError, setServerError] = useState<string | null>(null);
 
   const validate = () => {
     const next: typeof errors = {};
@@ -32,13 +35,23 @@ const RegisterScreen = () => {
     return Object.keys(next).length === 0;
   };
 
-  const handleRegister = () => {
+  const handleRegister = async () => {
     if (!validate()) return;
     setLoading(true);
-    setTimeout(() => {
+    setServerError(null);
+    try {
+      const response = await axiosClient.post('/api/auth/register', {
+        email,
+        password,
+        name: name.trim(),
+      });
+      await login(response.data.accessToken);
+    } catch (error: any) {
+      const msg = error?.response?.data?.message;
+      setServerError(Array.isArray(msg) ? msg.join(', ') : msg ?? 'Đăng ký thất bại');
+    } finally {
       setLoading(false);
-      login('mock_token_123');
-    }, 1200);
+    }
   };
 
   return (
@@ -82,6 +95,8 @@ const RegisterScreen = () => {
         secureTextEntry
       />
 
+      {serverError && <Text style={styles.serverError}>⚠️ {serverError}</Text>}
+
       <ShopButton
         title="Đăng ký ngay"
         onPress={handleRegister}
@@ -119,6 +134,12 @@ const styles = StyleSheet.create({
     marginBottom: 32,
   },
   submitBtn: { marginTop: 8 },
+  serverError: {
+    color: COLORS.error,
+    fontSize: SIZES.body2,
+    marginBottom: 12,
+    textAlign: 'center',
+  },
   loginLink: { marginTop: 20, alignItems: 'center' },
   loginLinkText: { fontSize: SIZES.body2, color: COLORS.textLight },
   loginLinkBold: { color: COLORS.primary, fontWeight: '700' },

@@ -2,11 +2,12 @@ import React from 'react';
 import { View, Text, StyleSheet, Image, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { RouteProp, useRoute } from '@react-navigation/native';
-import { useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import ShopButton from '@components/ui/ShopButton';
 import { useCartStore } from '@store/useCartStore';
-import { Product } from '../types/product.schema';
+import { Product, ProductSchema } from '../types/product.schema';
 import { COLORS, SIZES } from '@constants/theme';
+import { API_BASE_URL } from '@constants/api';
 import type { HomeStackParamList } from '@navigation/HomeStackNavigator';
 
 type ProductDetailRouteProp = RouteProp<HomeStackParamList, 'ProductDetail'>;
@@ -17,29 +18,60 @@ interface ProductPage {
   nextPage: number | null;
 }
 
+const fetchProductById = async (id: string): Promise<Product> => {
+  const response = await fetch(`${API_BASE_URL}/api/products/${id}`);
+  if (response.status === 404) {
+    throw new Error('Sản phẩm này không còn tồn tại trên hệ thống');
+  }
+  if (!response.ok) {
+    throw new Error('Lỗi mạng khi tải chi tiết sản phẩm');
+  }
+  const raw = await response.json();
+  const result = ProductSchema.safeParse(raw);
+  if (!result.success) {
+    throw new Error('Dữ liệu chi tiết sản phẩm không hợp lệ (Zod)');
+  }
+  return result.data;
+};
+
 const ProductDetailScreen = () => {
   const route = useRoute<ProductDetailRouteProp>();
-  const { productId } = route.params; // Chỉ nhận đúng 1 chuỗi ID, KHÔNG nhận Object
+  const { productId } = route.params;
   const queryClient = useQueryClient();
   const addItem = useCartStore((state) => state.addItem);
 
-  // Móc thẳng vào Cache mà HomeScreen đã lưu với queryKey ['productsInfinite'] —
-  // KHÔNG gọi lại API, tận dụng đúng cơ chế Cache của TanStack Query.
-  // Cache của useInfiniteQuery có dạng { pages: ProductPage[], pageParams: number[] } —
-  // phải flatMap tất cả các trang đã tải thành 1 mảng phẳng trước khi tìm theo id.
-  const cachedData = queryClient.getQueryData<{ pages: ProductPage[] }>(['productsInfinite']);
-  const cachedProducts = cachedData?.pages.flatMap((page) => page.items) ?? [];
-  const product = cachedProducts.find((p) => p.id === productId);
+  const {
+    data: product,
+    isLoading,
+    isError,
+    error,
+  } = useQuery({
+    queryKey: ['product', productId],
+    queryFn: () => fetchProductById(productId),
+    placeholderData: () => {
+      const infiniteData = queryClient.getQueryData<{ pages: ProductPage[] }>(['productsInfinite']);
+      const fromInfinite = infiniteData?.pages.flatMap((page) => page.items).find((p) => p.id === productId);
+      if (fromInfinite) return fromInfinite;
+      const listData = queryClient.getQueryData<Product[]>(['productsList']);
+      return listData?.find((p) => p.id === productId);
+    },
+  });
 
-  // Trường hợp Cache trống (VD: mở thẳng bằng Deep Link trước khi HomeScreen kịp Fetch)
-  if (!product) {
+  if (isLoading && !product) {
     return (
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.center}>
-          <Text style={styles.notFound}>Đang tải từ cloud... (Mã sản phẩm: {productId})</Text>
-          <Text style={styles.hint}>
-            Hãy quay lại Trang chủ để danh sách được tải vào Cache trước khi mở lại link này.
-          </Text>
+          <Text style={styles.notFound}>Đang tải chi tiết sản phẩm...</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  if (isError || !product) {
+    return (
+      <SafeAreaView style={styles.safeArea}>
+        <View style={styles.center}>
+          <Text style={styles.notFound}>{(error as Error)?.message ?? 'Không tìm thấy sản phẩm'}</Text>
         </View>
       </SafeAreaView>
     );

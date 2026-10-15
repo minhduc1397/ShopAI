@@ -1,8 +1,9 @@
 import axios from 'axios';
 import { useAuthStore } from '@store/useAuthStore';
+import { API_BASE_URL } from '@constants/api';
 
 const axiosClient = axios.create({
-  baseURL: 'https://api.shopai.com', // Domain gốc — chỉ sửa 1 nơi duy nhất
+  baseURL: API_BASE_URL, // Domain gốc — trỏ vào NestJS backend
   timeout: 10000,
   headers: { 'Content-Type': 'application/json' },
 });
