@@ -23,6 +23,7 @@ module.exports = {
         },
       },
     ],
+    '@babel/plugin-transform-export-namespace-from',
     'react-native-reanimated/plugin', // Đã cài ở Chương 4 — LUÔN LUÔN đứng cuối cùng, không xê dịch
   ],
 };

@@ -1,5 +1,6 @@
 // App.tsx
-import React from 'react';
+import React, { useEffect } from 'react';
+import { ActivityIndicator, View } from 'react-native';
 import { NavigationContainer, LinkingOptions } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -10,7 +11,10 @@ import { ThemeProvider } from '@contexts/ThemeContext';
 import LoginScreen from '@screens/LoginScreen';
 import RegisterScreen from '@screens/RegisterScreen';
 import RootStackNavigator from '@navigation/RootStackNavigator';
+import BiometricGateScreen from '@screens/BiometricGateScreen';
 import { useAuthStore } from '@store/useAuthStore';
+import { useAppLock } from '@hooks/useAppLock';
+import { COLORS } from '@constants/theme';
 
 const AuthStack = createNativeStackNavigator();
 
@@ -43,6 +47,40 @@ const linking: LinkingOptions<any> = {
 
 function App(): React.JSX.Element {
   const token = useAuthStore(state => state.token);
+  const isLoading = useAuthStore(state => state.isLoading);
+  const isUnlocked = useAuthStore(state => state.isUnlocked);
+  const setIsUnlocked = useAuthStore(state => state.setIsUnlocked);
+  const checkLocalToken = useAuthStore(state => state.checkLocalToken);
+
+  useEffect(() => {
+    checkLocalToken(); // Móc vào ổ cứng SecureStore ngay khi App vừa khởi chạy
+  }, [checkLocalToken]);
+
+  useEffect(() => {
+    if (token == null) {
+      setIsUnlocked(false);
+    }
+  }, [token, setIsUnlocked]);
+
+  // Canh gác App Lock — tự đặt lại isUnlocked = false nếu App ở nền quá lâu (Phần 8.12)
+  useAppLock({ isUnlocked, setIsUnlocked });
+
+  if (isLoading) {
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+        <ActivityIndicator size="large" color={COLORS.primary} />
+      </View>
+    );
+  }
+
+  // Có token (đã đăng nhập từ trước) NHƯNG chưa vượt cổng -> chặn ở đây
+  if (token != null && !isUnlocked) {
+    return (
+      <SafeAreaProvider>
+        <BiometricGateScreen onUnlock={() => setIsUnlocked(true)} />
+      </SafeAreaProvider>
+    );
+  }
 
   return (
     <SafeAreaProvider>

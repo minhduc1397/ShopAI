@@ -1,16 +1,24 @@
-"baseUrl": ".",
-"paths": {
-"@assets/*": ["src/assets/*"],
-"@components/*": ["src/components/*"],
-"@screens/*": ["src/screens/*"],
-"@navigation/*": ["src/navigation/*"],
-"@store/*": ["src/store/*"],
-"@services/*": ["src/services/*"],
-"@hooks/*": ["src/hooks/*"],
-"@data/*": ["src/data/*"],
-"@utils/*": ["src/utils/*"],
-"@constants/*": ["src/constants/*"],
-"@types/*": ["src/types/*"],
-"@contexts/*": ["src/contexts/*"],
-"@api/*": ["src/api/*"]
+{
+  "extends": "@react-native/typescript-config",
+  "compilerOptions": {
+    "ignoreDeprecations": "6.0",
+    "baseUrl": ".",
+    "paths": {
+      "@assets/*": ["src/assets/*"],
+      "@components/*": ["src/components/*"],
+      "@screens/*": ["src/screens/*"],
+      "@navigation/*": ["src/navigation/*"],
+      "@store/*": ["src/store/*"],
+      "@services/*": ["src/services/*"],
+      "@hooks/*": ["src/hooks/*"],
+      "@data/*": ["src/data/*"],
+      "@utils/*": ["src/utils/*"],
+      "@constants/*": ["src/constants/*"],
+      "@types/*": ["src/types/*"],
+      "@contexts/*": ["src/contexts/*"],
+      "@api/*": ["src/api/*"]
+    }
+  },
+  "include": ["**/*.ts", "**/*.tsx"],
+  "exclude": ["**/node_modules", "**/Pods"]
 }

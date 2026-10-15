@@ -8,6 +8,7 @@ import type { CompositeScreenProps } from '@react-navigation/native';
 import type { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
 import ProductCard from '@components/ProductCard';
 import ShopButton from '@components/ui/ShopButton';
+import LocationBadge from '@components/LocationBadge';
 import { COLORS, SIZES } from '@constants/theme';
 import { useAuthStore } from '@store/useAuthStore';
 import { useCartStore } from '@store/useCartStore';
@@ -28,7 +29,7 @@ const MOCK_PRODUCTS: Product[] = [
     id: 'prod_1',
     name: 'Bàn phím cơ ATK68 Magnetic Switch',
     price: 1890000,
-    image: 'https://images.unsplash.com/photo-1587829741301-dc798b83add3?auto=format&fit=crop&w=600&q=80',
+    image: 'https://images.unsplash.com/photo-1595225476474-87563907a212?auto=format&fit=crop&w=600&q=80',
   },
   {
     id: 'prod_2',
@@ -50,7 +51,7 @@ const MOCK_PRODUCTS: Product[] = [
   },
   {
     id: 'prod_5',
-    name: 'Tai nghe không dây chống ồn SOUNDPEATS ANC',
+    name: 'Tai nghe chụp tai Gaming SoundPeats ANC',
     price: 890000,
     image: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=600&q=80',
   },
@@ -62,9 +63,9 @@ const MOCK_PRODUCTS: Product[] = [
   },
   {
     id: 'prod_7',
-    name: 'Kit bàn phím nhôm CNC 3-Mode không dây',
+    name: 'Bàn phím Custom Nhôm CNC 3-Mode Wireless',
     price: 2450000,
-    image: 'https://images.unsplash.com/photo-1595225476474-87563907a212?auto=format&fit=crop&w=600&q=80',
+    image: 'https://images.unsplash.com/photo-1587829741301-dc798b83add3?auto=format&fit=crop&w=600&q=80',
   },
   {
     id: 'prod_8',
@@ -74,7 +75,7 @@ const MOCK_PRODUCTS: Product[] = [
   },
   {
     id: 'prod_9',
-    name: 'Tay cầm chơi game không dây Hall Effect',
+    name: 'Tay cầm chơi game không dây Hall Effect Pro',
     price: 950000,
     image: 'https://images.unsplash.com/photo-1600080972464-8e5f35f63d08?auto=format&fit=crop&w=600&q=80',
   },
@@ -112,9 +113,11 @@ const fetchProductsPage = async ({ pageParam }: { pageParam: number }): Promise<
   });
 };
 
-const HomeScreen = ({ navigation }: Props) => {
+const HomeScreen = ({ navigation, route }: Props) => {
   const logout = useAuthStore((state) => state.logout);
   const totalQuantity = useCartStore((state) => state.totalQuantity());
+
+  const scannedCode = route.params?.scannedCode;
 
   const {
     data,
@@ -138,18 +141,40 @@ const HomeScreen = ({ navigation }: Props) => {
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.container}>
+        {/* Header điều hướng */}
         <View style={styles.header}>
           <Text style={styles.headerTitle}>Khám phá</Text>
-          <View style={{ flexDirection: 'row', gap: 10 }}>
+          <View style={{ flexDirection: 'row', gap: 6, alignItems: 'center' }}>
             <ShopButton
-              title={`Giỏ hàng (${totalQuantity})`}
-              onPress={() => navigation.navigate('Cart')}
-              style={{ width: 120, height: 32, backgroundColor: COLORS.secondary }}
+              title="Hỏi AI"
+              onPress={() => navigation.navigate('AIChat')}
+              style={{ width: 'auto', paddingHorizontal: 10, height: 32, backgroundColor: COLORS.primary }}
               textStyle={{ fontSize: 12 }}
             />
-            <ShopButton title="Thoát" onPress={logout} style={{ width: 80, height: 32 }} />
+            <ShopButton
+              title="Quét Mã"
+              onPress={() => navigation.navigate('Scanner')}
+              style={{ width: 'auto', paddingHorizontal: 10, height: 32, backgroundColor: COLORS.secondary }}
+              textStyle={{ fontSize: 12 }}
+            />
+            <ShopButton
+              title="Thoát"
+              onPress={logout}
+              style={{ width: 'auto', paddingHorizontal: 10, height: 32 }}
+              textStyle={{ fontSize: 12 }}
+            />
           </View>
         </View>
+
+        {/* Thẻ vị trí + phí ship — tự dò GPS khi màn hình mount */}
+        <LocationBadge />
+
+        {/* Báo cáo nếu quét mã vạch thành công */}
+        {scannedCode && (
+          <View style={styles.scannedBanner}>
+            <Text style={styles.scannedText}>🔍 Mã vừa quét: {scannedCode}</Text>
+          </View>
+        )}
 
         {isLoading && <ActivityIndicator size="large" color={COLORS.primary} style={{ marginTop: 50 }} />}
 
@@ -169,7 +194,6 @@ const HomeScreen = ({ navigation }: Props) => {
               </Pressable>
             )}
             numColumns={2}
-            estimatedItemSize={260}
             contentContainerStyle={{ padding: SIZES.padding }}
             refreshing={isRefetching}
             onRefresh={refetch}
@@ -202,14 +226,27 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: SIZES.padding,
-    paddingVertical: 12,
+    paddingVertical: 10,
     borderBottomWidth: 1,
     borderBottomColor: '#eee',
   },
   headerTitle: {
-    fontSize: 22,
+    fontSize: 20,
     fontWeight: 'bold',
     color: COLORS.primary,
+  },
+  scannedBanner: {
+    backgroundColor: '#FFF9C4',
+    borderBottomWidth: 1,
+    borderBottomColor: '#FFF176',
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    alignItems: 'center',
+  },
+  scannedText: {
+    fontWeight: '600',
+    color: '#333',
+    fontSize: 13,
   },
 });
 

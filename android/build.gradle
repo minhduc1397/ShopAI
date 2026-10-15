@@ -19,3 +19,21 @@ buildscript {
 }
 
 apply plugin: "com.facebook.react.rootproject"
+apply plugin: "expo-root-project"
+
+subprojects { subproject ->
+    subproject.plugins.withId("com.android.library") {
+        subproject.android {
+            buildFeatures {
+                buildConfig = true
+            }
+        }
+    }
+    subproject.plugins.withId("com.android.application") {
+        subproject.android {
+            buildFeatures {
+                buildConfig = true
+            }
+        }
+    }
+}
