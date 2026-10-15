@@ -86,6 +86,9 @@ const ProductDetailScreen = () => {
           {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(product.price)}
         </Text>
         <Text style={styles.idNote}>Mã sản phẩm: {product.id}</Text>
+        {product.description ? (
+          <Text style={styles.description}>{product.description}</Text>
+        ) : null}
         <ShopButton title="Thêm vào giỏ hàng" onPress={() => addItem(product)} style={styles.buyBtn} />
       </ScrollView>
     </SafeAreaView>
@@ -99,7 +102,8 @@ const styles = StyleSheet.create({
   image: { width: '100%', height: 320, borderRadius: SIZES.radius, marginBottom: SIZES.padding },
   name: { fontSize: SIZES.h2, fontWeight: 'bold', color: COLORS.text, marginBottom: 8 },
   price: { fontSize: SIZES.h1, fontWeight: 'bold', color: COLORS.primary, marginBottom: 8 },
-  idNote: { fontSize: SIZES.body2, color: COLORS.textLight, marginBottom: 24 },
+  idNote: { fontSize: SIZES.body2, color: COLORS.textLight, marginBottom: 12 },
+  description: { fontSize: SIZES.body1, color: COLORS.text, lineHeight: 22, marginBottom: 24 },
   buyBtn: { marginTop: 8 },
   notFound: { fontSize: SIZES.body1, color: COLORS.error, textAlign: 'center', marginBottom: 8 },
   hint: { fontSize: SIZES.body2, color: COLORS.textLight, textAlign: 'center' },
