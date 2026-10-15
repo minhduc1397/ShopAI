@@ -24,7 +24,7 @@ interface CreateOrderResponse {
 
 // Giả lập Server tạo đơn hàng ở Chương 6 (Chương 9 sẽ đổi thành axiosClient.post)
 const createOrderLocal = async (payload: CreateOrderPayload): Promise<CreateOrderResponse> => {
-  await new Promise((resolve) => setTimeout(resolve, 1200));
+  await new Promise<void>((resolve) => setTimeout(() => resolve(), 1200));
   return { orderId: `ORD-${Date.now()}`, status: 'PENDING' };
 };
 

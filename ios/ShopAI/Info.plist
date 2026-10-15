@@ -66,5 +66,7 @@
     </array>
     <key>UIViewControllerBasedStatusBarAppearance</key>
     <false/>
+    <key>NSFaceIDUsageDescription</key>
+    <string>ShopAI dùng Face ID để bảo vệ tài khoản và thông tin đơn hàng của bạn.</string>
 </dict>
 </plist>

@@ -1,7 +1,13 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
     <uses-permission android:name="android.permission.INTERNET" />
+    <!-- Quyền Runtime: phải xin Pop-up lúc chạy -->
+    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
 
+    <!-- Quyền Install-time: chỉ khai báo, KHÔNG cần Pop-up -->
+    <uses-permission android:name="android.permission.VIBRATE" />
     <application
         android:name=".MainApplication"
         android:label="@string/app_name"
