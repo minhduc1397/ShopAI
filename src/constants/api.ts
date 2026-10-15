@@ -1,4 +1,4 @@
 // src/constants/api.ts
-// Đổi IP LAN này thành IP thật của máy tính bạn (xem bằng lệnh ipconfig / ifconfig).
-// Máy tính và điện thoại phải chung 1 mạng Wifi (nhắc lại bẫy Localhost ở Phần 9.4).
-export const API_BASE_URL = 'http://10.10.27.15:3000';
+// Khi cắm cáp USB (đã adb reverse tcp:3000 tcp:3000): dùng http://localhost:3000
+// Khi chạy qua mạng Wifi LAN không cắm cáp: đổi thành IP Wi-Fi của máy tính
+export const API_BASE_URL = 'http://localhost:3000';
