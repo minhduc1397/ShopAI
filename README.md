@@ -111,8 +111,8 @@ Cách sửa: hạ RN về **0.86.3** đúng tổ hợp chính thức của Expo 
 | Redux Toolkit (đề cương 5.2) | `store/redux/`, `ReduxCartDemoScreen` (Tài khoản → Demo Redux Toolkit) |
 | Giám sát lỗi (Ch.10): breadcrumb, non-fatal, test crash ẩn ở Dev | `services/monitoring.ts`, `AppErrorBoundary`, giữ 2s dòng phiên bản cuối Home |
 | `env.ts`, `eas.json`, ký Release | `src/constants/env.ts`, `eas.json`, `android/app/build.gradle` |
-| Jest + RNTL | `__tests__/` (22 test) |
-| Nest unit (AuthService mock Prisma) + Supertest | `shopai-backend/src/**/*.spec.ts`, `shopai-backend/test/` (20 test) |
+| Jest + RNTL + coverage ≥ 80% | `__tests__/` (29 test, `npm run test:coverage`) |
+| Nest unit (AuthService mock Prisma) + Supertest | `shopai-backend/src/**/*.spec.ts`, `shopai-backend/test/auth-orders.e2e-spec.ts` (26 test) |
 | Maestro `login_home`, `cart_checkout` | `.maestro/` |
 | CI GitHub Actions | `.github/workflows/ci.yml` |
 
@@ -153,19 +153,26 @@ Code đã chừa sẵn chỗ cắm; các bước dưới **không bắt buộc �
 **EAS Update / EAS Build**: `npm i -g eas-cli` → `eas login` → `eas init` → `npx expo install expo-updates`
 → `eas update --branch preview`. Profile `development / preview / production` có sẵn trong `eas.json`.
 
-**Keystore Release Android**
-```bash
-keytool -genkeypair -v -storetype PKCS12 -keystore android/app/shopai-upload.keystore -alias shopai-upload -keyalg RSA -keysize 2048 -validity 10000
-```
-Khai báo trong `%USERPROFILE%\.gradle\gradle.properties` (không commit):
-```
-SHOPAI_UPLOAD_STORE_FILE=shopai-upload.keystore
-SHOPAI_UPLOAD_KEY_ALIAS=shopai-upload
-SHOPAI_UPLOAD_STORE_PASSWORD=...
-SHOPAI_UPLOAD_KEY_PASSWORD=...
-```
-Build: `cd android && gradlew.bat assembleRelease` (APK) hoặc `bundleRelease` (AAB). Chưa có keystore thì
-bản Release tự ký bằng khóa debug để vẫn cài thử được.
+**Build Release đã ký (AAB nộp Store + APK cài thử)** — minh chứng mục D
+1. Tạo keystore (một lần, **nhớ sao lưu** file + mật khẩu):
+   ```bash
+   keytool -genkeypair -v -storetype PKCS12 -keystore android/app/shopai-release.keystore -alias shopai-release -keyalg RSA -keysize 2048 -validity 10000
+   ```
+2. Copy `android/keystore.properties.example` → `android/keystore.properties`, điền mật khẩu (file này bị git chặn).
+3. Build:
+   ```bash
+   cd android && gradlew.bat bundleRelease assembleRelease
+   ```
+   → `android/app/build/outputs/bundle/release/app-release.aab` và `.../apk/release/app-release.apk`.
+   Chưa có `keystore.properties` thì bản Release tự ký bằng khóa debug để vẫn cài thử được.
+4. Cài thử: `adb install -r android/app/build/outputs/apk/release/app-release.apk` → `npm run adb:reverse` → mở app
+   (không cần Metro). Bản Release chỉ cho HTTP tới `localhost/127.0.0.1/10.0.2.2`; demo qua Wi-Fi bằng IP LAN thì thêm IP
+   vào `android/app/src/release/res/xml/network_security_config.xml`.
+
+> Windows giới hạn đường dẫn 260 ký tự — `android/build.gradle` + `android/app/build.gradle` đã dời thư mục build C++
+> sang `%TEMP%\shopai-cxx` nên clone ở thư mục sâu vẫn build được bản arm64.
+
+Đối chiếu đầy đủ checklist + biên bản + trả lời đề cương: xem **[NGHIEM_THU.md](NGHIEM_THU.md)**.
 
 ---
 
@@ -177,7 +184,8 @@ bản Release tự ký bằng khóa debug để vẫn cài thử được.
 | Chat AI báo “chưa cấu hình GEMINI_API_KEY” | Điền `GEMINI_API_KEY` trong `shopai-backend/.env` rồi khởi động lại backend |
 | Chat AI báo “quá tải ở mọi model” | Key hết hạn mức trong ngày hoặc Google đang quá tải — đợi vài phút / đổi key |
 | Đăng nhập demo báo sai mật khẩu | `cd shopai-backend && npx prisma db seed` |
+| Bản Release báo “Đăng nhập thất bại” | Quên `npm run adb:reverse`, hoặc đang dùng IP LAN chưa khai báo trong `network_security_config.xml` |
 | `npm install` báo ERESOLVE | Đảm bảo file `.npmrc` có mặt (repo đã kèm) |
-| Build lỗi `ninja: manifest 'build.ninja' still dirty` | Xóa thư mục `node_modules/react-native-reanimated/android/.cxx` rồi build lại |
+| Build lỗi `ninja: manifest 'build.ninja' still dirty` / `Stat(...)` | Đường dẫn quá dài — xóa `%TEMP%\shopai-cxx` và `android/app/.cxx` rồi build lại; hoặc clone vào thư mục ngắn như `C:\ShopAI` |
 | Build báo thiếu SDK 36 | Android Studio → SDK Manager → cài *Android 16 (API 36)* + *Build-Tools 36.0.0* |
 | Màn hình đỏ “Unable to load script” | Metro chưa chạy (`npm start`) hoặc thiếu `adb reverse tcp:8081 tcp:8081` |

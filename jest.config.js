@@ -8,4 +8,14 @@ module.exports = {
   transformIgnorePatterns: [
     'node_modules/(?!((jest-)?react-native|@react-native(-community)?|@react-native-async-storage|@react-navigation|@tanstack|zustand|expo(-.*)?|@shopify)/)',
   ],
+  // Coverage (Phần 11.8): đo trên tầng logic + UI Kit — màn hình được phủ bằng Maestro E2E
+  collectCoverageFrom: [
+    'src/utils/**/*.ts',
+    'src/store/useCartStore.ts',
+    'src/api/apiError.ts',
+    'src/components/ui/ShopButton.tsx',
+  ],
+  coverageThreshold: {
+    global: { statements: 80, branches: 75, functions: 80, lines: 80 },
+  },
 };

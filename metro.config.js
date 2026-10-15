@@ -8,8 +8,8 @@ const { getDefaultConfig, mergeConfig } = require('@react-native/metro-config');
  */
 const config = {
   resolver: {
-    // Backend NestJS nằm chung repo — Metro không được quét/đóng gói thư mục này
-    blockList: [/shopai-backend[/\\].*/],
+    // Backend NestJS nằm chung repo + báo cáo coverage của Jest — Metro không quét/đóng gói
+    blockList: [/shopai-backend[/\\].*/, /[/\\]coverage[/\\].*/],
   },
 };
 

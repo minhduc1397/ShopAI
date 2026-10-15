@@ -17,6 +17,6 @@ const API_URLS: Record<AppEnv, string> = {
 export const API_BASE_URL = API_URLS[APP_ENV];
 
 // Cờ bật/tắt tính năng theo môi trường — tránh làm nhiễu dữ liệu giám sát lúc đang code
-export const ENABLE_CRASH_REPORTING = APP_ENV !== 'development';
+export const ENABLE_CRASHLYTICS = APP_ENV !== 'development';
 
 export const APP_VERSION = '1.1.0';

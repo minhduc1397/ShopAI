@@ -83,3 +83,7 @@ android/app/src/main/res/drawable-*/node_modules_*
 # Keystore release — tuyệt đối không commit
 *.jks
 android/app/*-upload.keystore
+android/keystore.properties
+
+# File build để nộp (AAB/APK) — nặng, không đưa lên git
+nop-bai/

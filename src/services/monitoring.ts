@@ -5,7 +5,7 @@
 //   xem được ở tab Tài khoản → "Nhật ký giám sát" (tiện demo trước hội đồng).
 // - Khi có Firebase: gọi setCrashReporter(crashlyticsAdapter) MỘT lần ở index.js
 //   (hướng dẫn chi tiết trong README) — không phải sửa màn hình nào.
-import { APP_ENV, ENABLE_CRASH_REPORTING } from '@constants/env';
+import { APP_ENV, ENABLE_CRASHLYTICS } from '@constants/env';
 
 export interface CrashReporter {
   log: (message: string) => void;
@@ -49,7 +49,7 @@ export const monitoring = {
   log(message: string) {
     push({ at: new Date().toISOString(), kind: 'log', message });
     if (__DEV__) console.log(`[monitor] ${message}`);
-    if (ENABLE_CRASH_REPORTING && reporter) safely(() => reporter!.log(message));
+    if (ENABLE_CRASHLYTICS && reporter) safely(() => reporter!.log(message));
   },
 
   /** Lỗi Non-Fatal: App vẫn sống, nhưng đội kỹ thuật được báo */
@@ -57,13 +57,13 @@ export const monitoring = {
     const err = error instanceof Error ? error : new Error(String(error));
     push({ at: new Date().toISOString(), kind: 'error', message: `${name}: ${err.message}` });
     if (__DEV__) console.warn(`[monitor] ${name}:`, err.message);
-    if (ENABLE_CRASH_REPORTING && reporter) safely(() => reporter!.recordError(err, name));
+    if (ENABLE_CRASHLYTICS && reporter) safely(() => reporter!.recordError(err, name));
   },
 
   /** Custom Keys — gắn bối cảnh vào mọi báo cáo sau đó */
   setAttributes(next: Record<string, string>) {
     attributes = { ...attributes, ...next };
-    if (ENABLE_CRASH_REPORTING && reporter) safely(() => reporter!.setAttributes(next));
+    if (ENABLE_CRASHLYTICS && reporter) safely(() => reporter!.setAttributes(next));
   },
 
   setUserId(id: string) {

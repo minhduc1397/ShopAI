@@ -36,4 +36,19 @@ subprojects { subproject ->
             }
         }
     }
+
+    // Windows giới hạn đường dẫn 260 ký tự: ninja đi kèm CMake 3.22 không đọc được file prefab
+    // nằm sâu trong node_modules/<lib>/android/.cxx/... (bản arm64 dài ~261 ký tự) → lỗi
+    // "manifest 'build.ninja' still dirty after 100 tries". Dời thư mục build C++ của các
+    // thư viện native (reanimated, worklets…) sang %TEMP% cho ngắn — clone project ở đâu cũng build được.
+    if (System.getProperty("os.name").toLowerCase().contains("windows")) {
+        def shortenCxxDir = {
+            def cmake = subproject.extensions.findByName("android")?.externalNativeBuild?.cmake
+            if (cmake?.path != null) {
+                cmake.buildStagingDirectory = new File(System.getProperty("java.io.tmpdir"), "shopai-cxx/${subproject.name}")
+            }
+        }
+        // Module do Expo cấu hình sẵn (đã evaluated) giữ nguyên — đường dẫn của chúng vốn ngắn
+        if (!subproject.state.executed) subproject.afterEvaluate(shortenCxxDir)
+    }
 }

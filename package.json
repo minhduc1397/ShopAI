@@ -12,7 +12,10 @@
     "typecheck": "tsc --noEmit",
     "backend:install": "npm --prefix shopai-backend install && npm --prefix shopai-backend run db:setup",
     "backend": "npm --prefix shopai-backend run start:dev",
-    "adb:reverse": "adb reverse tcp:3000 tcp:3000 && adb reverse tcp:8081 tcp:8081"
+    "adb:reverse": "adb reverse tcp:3000 tcp:3000 && adb reverse tcp:8081 tcp:8081",
+    "test:coverage": "jest --coverage",
+    "test:ci": "jest --coverage --ci --maxWorkers=2",
+    "e2e": "maestro test .maestro/"
   },
   "dependencies": {
     "@react-native-async-storage/async-storage": "2.2.0",

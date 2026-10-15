@@ -72,6 +72,18 @@ def enableProguardInReleaseBuilds = false
  */
 def jscFlavor = 'io.github.react-native-community:jsc-android:2026004.+'
 
+/**
+ * Chương 10 — Keystore release riêng của ShopAI.
+ * Mật khẩu nằm trong android/keystore.properties (đã bị .gitignore chặn, KHÔNG commit),
+ * mẫu: android/keystore.properties.example. Không có file này thì bản Release ký tạm bằng debug.keystore.
+ */
+def keystorePropsFile = rootProject.file("keystore.properties")
+def keystoreProps = new Properties()
+if (keystorePropsFile.exists()) {
+    keystorePropsFile.withInputStream { keystoreProps.load(it) }
+}
+def hasReleaseKeystore = keystoreProps['storeFile'] != null
+
 android {
     ndkVersion rootProject.ext.ndkVersion
     buildToolsVersion rootProject.ext.buildToolsVersion
@@ -85,6 +97,16 @@ android {
         versionCode 2
         versionName "1.1.0"
     }
+    // Windows giới hạn đường dẫn 260 ký tự: file .o của codegen (safe-area, screens…) nhúng nguyên đường dẫn
+    // nguồn trong node_modules (~380 ký tự). Đặt thư mục build C++ ở %TEMP% cho ngắn để CMake còn chỗ
+    // tự rút gọn tên file bằng mã băm (CMAKE_OBJECT_PATH_MAX mặc định 250). Xem thêm android/build.gradle.
+    if (System.getProperty("os.name").toLowerCase().contains("windows")) {
+        externalNativeBuild {
+            cmake {
+                buildStagingDirectory = new File(System.getProperty("java.io.tmpdir"), "shopai-cxx/app")
+            }
+        }
+    }
     signingConfigs {
         debug {
             storeFile file('debug.keystore')
@@ -92,14 +114,12 @@ android {
             keyAlias 'androiddebugkey'
             keyPassword 'android'
         }
-        // Chương 10 — Keystore release riêng. Mật khẩu KHÔNG nằm trong repo:
-        // khai báo trong ~/.gradle/gradle.properties (hoặc biến môi trường cùng tên), xem README.
         release {
-            if (project.hasProperty('SHOPAI_UPLOAD_STORE_FILE')) {
-                storeFile file(SHOPAI_UPLOAD_STORE_FILE)
-                storePassword SHOPAI_UPLOAD_STORE_PASSWORD
-                keyAlias SHOPAI_UPLOAD_KEY_ALIAS
-                keyPassword SHOPAI_UPLOAD_KEY_PASSWORD
+            if (hasReleaseKeystore) {
+                storeFile file(keystoreProps['storeFile'])
+                storePassword keystoreProps['storePassword']
+                keyAlias keystoreProps['keyAlias']
+                keyPassword keystoreProps['keyPassword']
             }
         }
     }
@@ -109,7 +129,7 @@ android {
         }
         release {
             // Có keystore riêng thì ký bằng nó; máy chưa cấu hình (VD laptop thi) vẫn build được bằng khóa debug
-            signingConfig project.hasProperty('SHOPAI_UPLOAD_STORE_FILE') ? signingConfigs.release : signingConfigs.debug
+            signingConfig hasReleaseKeystore ? signingConfigs.release : signingConfigs.debug
             minifyEnabled enableProguardInReleaseBuilds
             proguardFiles getDefaultProguardFile("proguard-android.txt"), "proguard-rules.pro"
         }

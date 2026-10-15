@@ -1,0 +1,4 @@
+<!-- Chỉ áp dụng cho bản Release: cho phép HTTP tới backend demo nội bộ (xem res/xml/network_security_config.xml) -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <application android:networkSecurityConfig="@xml/network_security_config" />
+</manifest>
