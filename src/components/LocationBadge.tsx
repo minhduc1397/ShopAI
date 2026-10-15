@@ -3,8 +3,7 @@ import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-nati
 import { useCurrentLocation } from '@hooks/useCurrentLocation';
 import { DEFAULT_SHIPPING_FEE, WAREHOUSE_COORDS, getDistanceKm, getShippingTier } from '@constants/shipping';
 import { COLORS, SIZES } from '@constants/theme';
-
-const formatVnd = (value: number) => `${value.toLocaleString('vi-VN')}đ`;
+import { formatCurrency } from '@utils/formatCurrency';
 
 const LocationBadge = () => {
   const { coords, loading, error, refresh } = useCurrentLocation();
@@ -24,7 +23,7 @@ const LocationBadge = () => {
     return (
       <Pressable style={styles.badge} onPress={refresh}>
         <Text style={styles.textMuted}>
-          📍 {error ?? 'Chưa rõ vị trí'} — tạm tính phí ship {formatVnd(DEFAULT_SHIPPING_FEE)}
+          📍 {error ?? 'Chưa rõ vị trí'} — tạm tính phí ship {formatCurrency(DEFAULT_SHIPPING_FEE)}
         </Text>
         <Text style={styles.retry}>Thử lại</Text>
       </Pressable>
@@ -44,7 +43,7 @@ const LocationBadge = () => {
     <Pressable style={[styles.badge, styles.badgeSuccess]} onPress={refresh}>
       <View style={{ flex: 1 }}>
         <Text style={styles.title}>
-          📍 Cách kho {distanceKm.toFixed(1)} km · Ship {formatVnd(tier.fee)}
+          📍 Cách kho {distanceKm.toFixed(1)} km · Ship {formatCurrency(tier.fee)}
         </Text>
         <Text style={styles.subtitle}>{tier.label}</Text>
         <Text style={styles.coords}>

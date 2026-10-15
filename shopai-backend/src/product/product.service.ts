@@ -15,10 +15,9 @@ export interface ProductFilter {
 const normalize = (s: string) =>
   s
     .normalize('NFD')
-    .replace(/[̀-ͯ]/g, '')
-    .replace(/đ/g, 'd')
-    .replace(/Đ/g, 'D')
+    .replace(/\p{M}/gu, '') // NFD tách "à" thành "a" + dấu huyền → xóa mọi dấu kết hợp
     .toLowerCase()
+    .replace(/đ/g, 'd')
     .trim();
 
 @Injectable()

@@ -14,8 +14,10 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import ShopButton from '@components/ui/ShopButton';
 import { COLORS, SIZES } from '@constants/theme';
-import { AI_GREETING, AI_SUGGESTIONS } from '@constants/aiPrompt';
-import { askShopAI, toFriendlyError, type ChatTurn } from '@services/geminiService';
+import { useTheme } from '@contexts/ThemeContext';
+import { extractProductIds } from '@utils/productLinks';
+import { AI_GREETING, AI_SUGGESTIONS, MAX_HISTORY_TURNS } from '@constants/aiPrompt';
+import { askShopAI, toFriendlyError, type ChatTurn } from '@services/aiChatService';
 
 type Message = {
   id: string;
@@ -24,11 +26,10 @@ type Message = {
   status?: 'sent' | 'error'; // 'error' -> hiện nút Thử lại (Phần 8.10)
 };
 
-/** AI được dặn ghi mã sản phẩm dạng (prod_18) — tách ra để hiện nút mở nhanh */
-const extractProductIds = (text: string) => [...new Set(text.match(/prod_d+/g) ?? [])].slice(0, 3);
-
 export default function AIChatScreen() {
   const navigation = useNavigation<any>();
+  const { colors, isDark } = useTheme();
+  const botBg = isDark ? '#262B40' : '#E5E7EB';
   const [messages, setMessages] = useState<Message[]>([
     { id: 'greeting', text: AI_GREETING, isBot: true, status: 'sent' },
   ]);
@@ -44,10 +45,16 @@ export default function AIChatScreen() {
     setTimeout(() => listRef.current?.scrollToEnd({ animated: true }), 100);
   };
 
-  /** Dựng lịch sử hội thoại theo đúng định dạng Gemini yêu cầu. */
+  /**
+   * Dựng lịch sử hội thoại gửi kèm câu hỏi.
+   * `list` luôn kết thúc bằng chính câu hỏi đang gửi → bỏ phần tử cuối, Server tự ghép câu hỏi vào sau
+   * (trước đây câu hỏi bị gửi 2 lần liền nhau). Chỉ giữ N lượt gần nhất để tiết kiệm token (Phần 8.11).
+   */
   const buildHistory = useCallback((list: Message[]): ChatTurn[] => {
     return list
+      .slice(0, -1)
       .filter((m) => m.id !== 'greeting' && m.status !== 'error') // Bỏ câu chào và các tin lỗi
+      .slice(-MAX_HISTORY_TURNS)
       .map((m) => ({
         role: m.isBot ? ('model' as const) : ('user' as const),
         parts: [{ text: m.text }],
@@ -108,13 +115,16 @@ export default function AIChatScreen() {
       <View
         style={[
           styles.bubble,
-          item.isBot ? styles.botBubble : styles.userBubble,
+          item.isBot ? [styles.botBubble, { backgroundColor: botBg }] : styles.userBubble,
           item.status === 'error' && styles.errorBubble,
         ]}
       >
         <Text
           selectable // Cho phép chạm giữ để copy (Phần 8.10)
-          style={{ color: item.isBot ? 'black' : 'white' }}
+          style={{
+            color:
+              item.isBot && item.status !== 'error' ? colors.text : item.isBot ? '#7F1D1D' : COLORS.white,
+          }}
         >
           {item.text}
         </Text>
@@ -125,10 +135,10 @@ export default function AIChatScreen() {
           {extractProductIds(item.text).map((id) => (
             <Pressable
               key={id}
-              style={styles.productLink}
+              style={[styles.productLink, { backgroundColor: colors.primarySoft }]}
               onPress={() => navigation.navigate('ProductDetail', { productId: id })}
             >
-              <Text style={styles.productLinkText}>Xem {id} →</Text>
+              <Text style={[styles.productLinkText, { color: colors.primary }]}>Xem {id} →</Text>
             </Pressable>
           ))}
         </View>
@@ -145,7 +155,7 @@ export default function AIChatScreen() {
   /** Trạng thái rỗng: gợi ý sẵn câu hỏi để user biết hỏi gì (Phần 8.10). */
   const renderSuggestions = () => (
     <View style={styles.suggestBox}>
-      <Text style={styles.suggestTitle}>Gợi ý cho bạn:</Text>
+      <Text style={[styles.suggestTitle, { color: colors.textLight }]}>Gợi ý cho bạn:</Text>
       <View style={styles.chipRow}>
         {AI_SUGGESTIONS.map((s) => (
           <Pressable key={s} style={styles.chip} onPress={() => handleSend(s)} disabled={isTyping}>
@@ -160,16 +170,18 @@ export default function AIChatScreen() {
 
   return (
     // SafeAreaView tránh Notch/Status Bar che mất Header
-    <SafeAreaView style={styles.safeArea} edges={['bottom']}>
+    <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background }]} edges={['bottom']}>
       {/* KeyboardAvoidingView — "phao cứu sinh" chống bàn phím che khung Chat */}
       <KeyboardAvoidingView
         style={styles.container}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
       >
-        <View style={styles.header}>
-          <Text style={styles.headerTitle}>Trợ lý ShopAI ✨</Text>
-          <Text style={styles.headerSub}>{isTyping ? 'Đang soạn tin...' : 'Đang hoạt động'}</Text>
+        <View style={[styles.header, { backgroundColor: colors.surface }]}>
+          <Text style={[styles.headerTitle, { color: colors.text }]}>Trợ lý ShopAI ✨</Text>
+          <Text style={[styles.headerSub, { color: colors.textLight }]}>
+            {isTyping ? 'Đang soạn tin...' : 'Đang hoạt động'}
+          </Text>
         </View>
 
         <FlatList
@@ -186,22 +198,27 @@ export default function AIChatScreen() {
               {messages.length <= 1 && renderSuggestions()}
               {/* Typing indicator — bong bóng ba chấm (Phần 8.10) */}
               {isTyping && (
-                <View style={[styles.bubble, styles.botBubble, styles.typingBubble]}>
+                <View
+                  style={[styles.bubble, styles.botBubble, styles.typingBubble, { backgroundColor: botBg }]}
+                >
                   <ActivityIndicator size="small" color="#666" />
-                  <Text style={styles.typingText}> Trợ lý đang soạn tin...</Text>
+                  <Text style={[styles.typingText, { color: colors.textLight }]}>
+                    {' '}
+                    Trợ lý đang soạn tin...
+                  </Text>
                 </View>
               )}
             </>
           }
         />
 
-        <View style={styles.inputArea}>
+        <View style={[styles.inputArea, { backgroundColor: colors.surface }]}>
           <TextInput
-            style={styles.input}
+            style={[styles.input, { backgroundColor: colors.background, color: colors.text }]}
             value={inputText}
             onChangeText={setInputText}
             placeholder="Nhập câu hỏi tư vấn..."
-            placeholderTextColor="#888"
+            placeholderTextColor={colors.textLight}
             maxLength={500} // Chặn user dán cả cuốn tiểu thuyết (Phần 8.11, chiến lược #2)
             editable={!isTyping} // Khoá ô nhập khi đang chờ AI
             multiline
@@ -221,16 +238,16 @@ export default function AIChatScreen() {
 }
 
 const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: COLORS.background },
-  container: { flex: 1, backgroundColor: COLORS.background },
-  header: { padding: 15, backgroundColor: COLORS.surface, alignItems: 'center' },
-  headerTitle: { fontSize: SIZES.h2, fontWeight: 'bold', color: COLORS.text },
-  headerSub: { fontSize: 12, color: '#777', marginTop: 2 },
+  safeArea: { flex: 1 },
+  container: { flex: 1 },
+  header: { padding: 15, alignItems: 'center' },
+  headerTitle: { fontSize: SIZES.h2, fontWeight: 'bold' },
+  headerSub: { fontSize: 12, marginTop: 2 },
 
   bubble: { padding: 15, borderRadius: 20, marginBottom: 10, maxWidth: '80%' },
-  botBubble: { backgroundColor: '#E0E0E0', alignSelf: 'flex-start', borderBottomLeftRadius: 0 },
+  botBubble: { alignSelf: 'flex-start', borderBottomLeftRadius: 0 },
   userBubble: { backgroundColor: COLORS.primary, alignSelf: 'flex-end', borderBottomRightRadius: 0 },
-  errorBubble: { backgroundColor: '#FFE0E0', borderWidth: 1, borderColor: COLORS.error },
+  errorBubble: { backgroundColor: '#FEE2E2', borderWidth: 1, borderColor: COLORS.error },
   typingBubble: { flexDirection: 'row', alignItems: 'center' },
   typingText: { color: '#666', fontSize: 13 },
 

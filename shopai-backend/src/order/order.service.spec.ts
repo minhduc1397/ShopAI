@@ -11,9 +11,6 @@ class InMemoryOrderRepository implements IOrderRepository {
     this.orders.push(order);
     return Promise.resolve(order);
   }
-  findAll() {
-    return Promise.resolve(this.orders);
-  }
   findByUserId(userId: string) {
     return Promise.resolve(this.orders.filter((o) => o.userId === userId));
   }

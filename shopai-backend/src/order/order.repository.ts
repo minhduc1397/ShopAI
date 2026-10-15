@@ -20,7 +20,6 @@ export interface OrderRecord {
 // Bản hợp đồng (Phần 9.8 mục 5)
 export interface IOrderRepository {
   save(input: CreateOrderInput): Promise<OrderRecord>;
-  findAll(): Promise<OrderRecord[]>;
   findByUserId(userId: string): Promise<OrderRecord[]>;
   findById(orderId: string): Promise<OrderRecord | null>;
   updateStatus(orderId: string, status: string): Promise<OrderRecord>;
@@ -41,13 +40,6 @@ export class PrismaOrderRepository implements IOrderRepository {
         items: { create: input.items },
       },
       include: { items: true },
-    });
-  }
-
-  findAll(): Promise<OrderRecord[]> {
-    return this.prisma.order.findMany({
-      include: { items: true },
-      orderBy: { createdAt: 'desc' },
     });
   }
 

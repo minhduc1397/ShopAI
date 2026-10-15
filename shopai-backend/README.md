@@ -16,8 +16,8 @@ npm run start:dev    # http://localhost:3000 — Swagger: /api/docs
 | `POST /api/orders` 🔒 | Server tự tính lại tổng tiền, sai → 400 |
 | `GET /api/orders` · `GET /api/orders/:id` 🔒 | Chỉ đơn của chính user |
 | `POST /api/orders/:id/pay` 🔒 | PENDING → PAID (idempotent) |
-| `POST /api/ai/chat` | Proxy DeepSeek (hoặc Gemini), prompt kèm catalog thật, rate limit 10 req/phút |
-| `GET /api/ai/status` | Đang dùng nhà cung cấp AI nào (không lộ key) |
+| `POST /api/ai/chat` | Proxy Gemini (tự chuyển model khi quá tải), prompt kèm catalog thật, rate limit 10 req/phút |
+| `GET /api/ai/status` | Model AI đang dùng (không lộ key) |
 | `GET /api/health` | Cho chấm "Server online" trên app |
 
 Test: `npm test` (unit, mock Prisma) · `npm run test:e2e` (Supertest, DB riêng `prisma/test.db`).

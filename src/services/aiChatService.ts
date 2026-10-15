@@ -1,4 +1,4 @@
-// src/services/geminiService.ts
+// src/services/aiChatService.ts
 import axiosClient from '@api/axiosClient';
 
 /** Cùng tinh thần ChatTurn Chương 8 — đơn giản hóa khi gửi Nest */
@@ -8,7 +8,7 @@ export type ChatTurn = {
   text?: string;
 };
 
-/** Gọi NestJS /api/ai/chat — Server cầm key DeepSeek/Gemini, App không hề biết key */
+/** Gọi NestJS /api/ai/chat — Server cầm Gemini API Key, App không hề biết key */
 export const askShopAI = async (question: string, history: ChatTurn[] = []): Promise<string> => {
   const { data } = await axiosClient.post<{ reply: string }>('/api/ai/chat', {
     message: question,
@@ -22,7 +22,7 @@ export const askShopAI = async (question: string, history: ChatTurn[] = []): Pro
 
 /** Chuyển thông báo lỗi kỹ thuật thành câu chữ mà người dùng đọc hiểu được. */
 export const toFriendlyError = (error: unknown): string => {
-  // Server Nest đã dịch lý do sang tiếng Việt (chưa có key, sai key, hết số dư DeepSeek, timeout…)
+  // Server Nest đã dịch lý do sang tiếng Việt (chưa có key, sai key, quá tải mọi model…)
   // — các lỗi cấu hình/tài khoản này hiện nguyên văn để người demo biết sửa ở đâu
   const res = (error as { response?: { status?: number; data?: { message?: unknown } } })?.response;
   const serverMsg = res?.data?.message;
