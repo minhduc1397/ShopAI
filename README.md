@@ -1,97 +1,181 @@
-This is a new [**React Native**](https://reactnative.dev) project, bootstrapped using [`@react-native-community/cli`](https://github.com/react-native-community/cli).
+# ShopAI — Góc công nghệ (React Native + NestJS)
 
-# Getting Started
+Đồ án môn **React Native Thực Chiến**: app mua đồ công nghệ có trợ lý AI, đầy đủ 11 chương theo
+[bản đồ đề cương](https://thayduy.github.io/react-native-thuc-chien/docs/BAN_DO_DE_CUONG).
 
-> **Note**: Make sure you have completed the [Set Up Your Environment](https://reactnative.dev/docs/set-up-your-environment) guide before proceeding.
+| Thư mục | Nội dung |
+|---|---|
+| `/` | App **React Native 0.86.3** + Expo SDK 57 modules (TypeScript, New Architecture) |
+| `shopai-backend/` | API **NestJS 11** + JWT + Prisma/SQLite + proxy Gemini (Chương 9) |
+| `.maestro/` | Kịch bản test E2E Maestro (Chương 11) |
+| `.github/workflows/ci.yml` | CI: typecheck + lint + Jest (mobile) và lint + unit + e2e (backend) |
 
-## Step 1: Start Metro
+---
 
-First, you will need to run **Metro**, the JavaScript build tool for React Native.
+## ⚡ Chạy nhanh trên laptop thi (Windows + Android Emulator)
 
-To start the Metro dev server, run the following command from the root of your React Native project:
+Cần sẵn: **Node ≥ 22**, **JDK 17**, **Android Studio** (SDK + 1 máy ảo). Mở 3 cửa sổ terminal tại thư mục repo.
 
-```sh
-# Using npm
+```bash
+git clone https://github.com/minhduc1397/ShopAI.git
+cd ShopAI
+npm install                 # cài app (file .npmrc đã bật legacy-peer-deps, không cần thêm cờ)
+npm run backend:install     # cài backend + tự tạo .env + Database SQLite + seed tài khoản demo & 25 sản phẩm
+```
+
+> Muốn demo **chat AI**: mở `shopai-backend/.env` (vừa được tự tạo), điền `GEMINI_API_KEY`
+> (lấy tại https://aistudio.google.com/app/apikey) rồi khởi động lại backend. Không có key thì mọi thứ khác vẫn chạy,
+> riêng chat AI báo “Server chưa có Gemini API Key”.
+
+**Terminal 1 — Backend**
+```bash
+npm run backend             # http://localhost:3000 — Swagger: http://localhost:3000/api/docs
+```
+
+**Terminal 2 — Metro**
+```bash
 npm start
-
-# OR using Yarn
-yarn start
 ```
 
-## Step 2: Build and run your app
-
-With Metro running, open a new terminal window/pane from the root of your React Native project, and use one of the following commands to build and run your Android or iOS app:
-
-### Android
-
-```sh
-# Using npm
+**Terminal 3 — App** (máy ảo đã mở sẵn)
+```bash
+npm run adb:reverse         # cho máy ảo gọi được localhost:3000 và Metro
 npm run android
-
-# OR using Yarn
-yarn android
 ```
 
-### iOS
+Đăng nhập: **demo@shopai.com / 123456** (hoặc bấm “⚡ Dùng tài khoản demo”, hoặc tự Đăng ký).
 
-For iOS, remember to install CocoaPods dependencies (this only needs to be run on first clone or after updating native deps).
+> Điện thoại thật qua Wi-Fi (không cắm cáp): đổi `development` trong `src/constants/env.ts` thành IP LAN
+> của laptop, VD `http://192.168.1.15:3000` (xem bằng `ipconfig`).
 
-The first time you create a new project, run the Ruby bundler to install CocoaPods itself:
+---
 
-```sh
-bundle install
+## 🎬 Kịch bản demo trước hội đồng (< 10 phút)
+
+1. **Đăng ký** tài khoản mới → vào thẳng app (JWT thật, lưu SecureStore).
+2. **Khám phá**: chấm xanh “Server online”, tìm “ban phim” (không dấu vẫn ra), lọc danh mục, kéo để làm mới, cuộn để tải thêm (InfiniteQuery).
+3. Bấm sản phẩm → **Chi tiết** → **Mua ngay** → sang tab Giỏ (badge số lượng).
+4. **Giỏ**: tăng/giảm số lượng (tối đa 10 hoặc theo tồn kho), xóa → **Thanh toán** (Modal).
+5. Đặt hàng → mã `ORD-…` **PENDING** → **Xem hóa đơn** → **Thanh toán giả lập** → **PAID**.
+6. Tab **Đơn hàng**: lọc Chờ thanh toán / Đã thanh toán. Tắt backend rồi bật lại → đơn **vẫn còn** (Prisma).
+7. **Tài khoản**: thống kê đơn + tổng chi tiêu (từ `/api/auth/me`), bật **Giao diện tối**, mở **Demo Redux Toolkit**, xem **Nhật ký giám sát**.
+8. **Trợ lý AI ✨**: hỏi “tai nghe chống ồn nào đáng mua?” → AI gợi ý đúng hàng shop đang bán, có nút “Xem prod_18 →” mở sản phẩm.
+9. **Quét mã 📷** (máy thật) → rung → mã về Trang chủ, mã dạng `prod_3` có nút “Mở sản phẩm”.
+10. Deep link: `adb shell am start -a android.intent.action.VIEW -d "shopai://product/prod_3"`.
+11. Đưa app xuống nền > 2 phút → mở lại phải xác thực sinh trắc học (App Lock).
+12. Đăng xuất → về Login, không “Back” lén vào được.
+
+---
+
+## 🔧 Lỗi build Android sau Sprint 8–9 đã sửa thế nào
+
+Project tạo bằng **React Native 0.87** (Gradle 9.4.1, AGP 9), nhưng Sprint 8 cài **Expo SDK 57** — bản Expo này
+chỉ hỗ trợ **RN 0.86.3**. Hậu quả: plugin Gradle của Expo (Kotlin 2.1.20) không đọc được Kotlin 2.3 trong Gradle 9.4.1,
+module `expo` gọi API `setTargetSdk` đã bị xóa ở AGP 9 → `gradlew assembleDebug` thất bại.
+Cách sửa: hạ RN về **0.86.3** đúng tổ hợp chính thức của Expo 57 (Gradle 9.3.1, compileSdk 36, Kotlin 2.1.20) và
+đồng bộ reanimated / worklets / screens / safe-area / flash-list / async-storage theo `expo/bundledNativeModules.json`.
+`reactNativeArchitectures` để `arm64-v8a,x86_64` (máy thật + máy ảo) cho build nhanh.
+
+---
+
+## ✨ Phần tự làm thêm / khác giáo trình
+
+- **Catalog riêng 25 món đồ công nghệ** (`shopai-backend/src/product/product.data.ts`): ảnh được soi từng tấm cho khớp đúng món (bản cũ có Rubik hiện ảnh Bitcoin, dầu bôi trơn hiện vỉ thuốc…), có hãng, danh mục, điểm đánh giá, tồn kho.
+- **Tìm kiếm không dấu + lọc danh mục phía Server** (`GET /api/products?q=&category=`, `GET /api/products/categories`).
+- **Trợ lý AI biết hàng thật**: Server ghép catalog vào System Prompt → AI chỉ gợi ý món đang bán, đúng giá; app biến mã `prod_xx` trong câu trả lời thành nút mở sản phẩm.
+- **Luật giỏ hàng**: tối đa 10 món cùng loại và không vượt tồn kho Server báo.
+- **Tab Tài khoản** + `GET /api/auth/me` (số đơn, tổng đã thanh toán), công tắc rung phản hồi.
+- **Bộ nhận diện riêng** tím indigo + vàng hổ phách, Dark Mode áp dụng cả header/tab bar và **nhớ lựa chọn**.
+- **Hóa đơn kiểu biên lai** có ảnh sản phẩm, badge trạng thái, giá snapshot.
+- **Sửa lỗi**: đăng xuất giờ xóa cache React Query (trước đó user sau thấy đơn của user trước); tab Đơn hàng không còn trộn đơn lưu cục bộ; Home không còn âm thầm hiện dữ liệu giả khi Server tắt — hiện đúng lỗi *mất kết nối* / *dữ liệu không hợp lệ (Zod)* kèm nút Thử lại.
+
+---
+
+## ✅ Đối chiếu checklist `SHOPAI_HOAN_THIEN`
+
+| Mục | Ở đâu trong code |
+|---|---|
+| Auth Login/Register JWT thật, SecureStore, App Lock | `LoginScreen`, `RegisterScreen`, `useAuthStore`, `useAppLock`, `BiometricGateScreen` · Nest `src/auth/` |
+| Home: Nest + InfiniteQuery + Zod + phân biệt lỗi + refresh | `HomeScreen`, `services/catalogApi.ts`, `types/product.schema.ts` |
+| Detail theo `productId` + Deep Link | `ProductDetailScreen`, `linking` trong `App.tsx`, `AndroidManifest.xml` |
+| Giỏ Zustand persist + badge | `store/useCartStore.ts`, `MainTabNavigator` |
+| Checkout `useMutation` + Bearer → PENDING; chỉ xóa giỏ khi thành công | `CheckoutScreen`, `api/axiosClient.ts` |
+| Orders list/detail/pay → PAID; 401 khi thiếu token; Server tự tính tiền | `OrdersScreen`, `OrderDetailScreen` · Nest `src/order/` |
+| Prisma + SQLite, restart không mất đơn | `shopai-backend/prisma/` |
+| AI proxy, không còn Gemini Key/SDK trong app | Nest `src/ai/` · app chỉ còn `services/geminiService.ts` gọi `/api/ai/chat` |
+| Swagger, ValidationPipe, Helmet, Rate limit, `.env.example` | `shopai-backend/src/main.ts`, `app.module.ts` |
+| Dark Mode, Design System, Button variants | `contexts/ThemeContext.tsx`, `components/ui/ShopButton.tsx` |
+| FlashList + Reanimated + SafeArea | `HomeScreen` (FadeInDown) |
+| Camera scan + haptic + GPS ship | `ScannerScreen`, `utils/haptics.ts`, `LocationBadge` |
+| Redux Toolkit (đề cương 5.2) | `store/redux/`, `ReduxCartDemoScreen` (Tài khoản → Demo Redux Toolkit) |
+| Giám sát lỗi (Ch.10): breadcrumb, non-fatal, test crash ẩn ở Dev | `services/monitoring.ts`, `AppErrorBoundary`, giữ 2s dòng phiên bản cuối Home |
+| `env.ts`, `eas.json`, ký Release | `src/constants/env.ts`, `eas.json`, `android/app/build.gradle` |
+| Jest + RNTL | `__tests__/` (22 test) |
+| Nest unit (AuthService mock Prisma) + Supertest | `shopai-backend/src/**/*.spec.ts`, `shopai-backend/test/` (20 test) |
+| Maestro `login_home`, `cart_checkout` | `.maestro/` |
+| CI GitHub Actions | `.github/workflows/ci.yml` |
+
+---
+
+## 🧪 Kiểm thử
+
+```bash
+npm run typecheck && npm run lint && npm test           # Mobile
+cd shopai-backend && npm test && npm run test:e2e        # Backend (e2e dùng prisma/test.db riêng)
+maestro test .maestro/                                   # E2E trên máy ảo (backend + app đang chạy)
 ```
 
-Then, and every time you update your native dependencies, run:
+---
 
-```sh
-bundle exec pod install
+## 🔌 Phần cần tài khoản riêng (Chương 10)
+
+Code đã chừa sẵn chỗ cắm; các bước dưới **không bắt buộc để app chạy**.
+
+**Firebase Crashlytics**
+1. Tạo project Firebase, tải `google-services.json` vào `android/app/`.
+2. `npm install @react-native-firebase/app @react-native-firebase/crashlytics`, thêm 2 plugin Gradle
+   (`com.google.gms.google-services`, `com.google.firebase.firebase-crashlytics`) như giáo trình Bước 1.
+3. Trong `index.js` thêm:
+   ```js
+   import crashlytics from '@react-native-firebase/crashlytics';
+   import { setCrashReporter } from './src/services/monitoring';
+   setCrashReporter({
+     log: (m) => crashlytics().log(m),
+     recordError: (e, n) => crashlytics().recordError(e, n),
+     setAttributes: (a) => crashlytics().setAttributes(a),
+     setUserId: (id) => crashlytics().setUserId(id),
+     crash: () => crashlytics().crash(),
+   });
+   ```
+   Mọi màn hình đang gọi `monitoring.*` sẽ tự gửi về Firebase — không phải sửa thêm.
+
+**EAS Update / EAS Build**: `npm i -g eas-cli` → `eas login` → `eas init` → `npx expo install expo-updates`
+→ `eas update --branch preview`. Profile `development / preview / production` có sẵn trong `eas.json`.
+
+**Keystore Release Android**
+```bash
+keytool -genkeypair -v -storetype PKCS12 -keystore android/app/shopai-upload.keystore -alias shopai-upload -keyalg RSA -keysize 2048 -validity 10000
 ```
-
-For more information, please visit [CocoaPods Getting Started guide](https://guides.cocoapods.org/using/getting-started.html).
-
-```sh
-# Using npm
-npm run ios
-
-# OR using Yarn
-yarn ios
+Khai báo trong `%USERPROFILE%\.gradle\gradle.properties` (không commit):
 ```
+SHOPAI_UPLOAD_STORE_FILE=shopai-upload.keystore
+SHOPAI_UPLOAD_KEY_ALIAS=shopai-upload
+SHOPAI_UPLOAD_STORE_PASSWORD=...
+SHOPAI_UPLOAD_KEY_PASSWORD=...
+```
+Build: `cd android && gradlew.bat assembleRelease` (APK) hoặc `bundleRelease` (AAB). Chưa có keystore thì
+bản Release tự ký bằng khóa debug để vẫn cài thử được.
 
-If everything is set up correctly, you should see your new app running in the Android Emulator, iOS Simulator, or your connected device.
+---
 
-This is one way to run your app — you can also build it directly from Android Studio or Xcode.
+## 🧯 Gỡ lỗi nhanh
 
-## Step 3: Modify your app
-
-Now that you have successfully run the app, let's make changes!
-
-Open `App.tsx` in your text editor of choice and make some changes. When you save, your app will automatically update and reflect these changes — this is powered by [Fast Refresh](https://reactnative.dev/docs/fast-refresh).
-
-When you want to forcefully reload, for example to reset the state of your app, you can perform a full reload:
-
-- **Android**: Press the <kbd>R</kbd> key twice or select **"Reload"** from the **Dev Menu**, accessed via <kbd>Ctrl</kbd> + <kbd>M</kbd> (Windows/Linux) or <kbd>Cmd ⌘</kbd> + <kbd>M</kbd> (macOS).
-- **iOS**: Press <kbd>R</kbd> in iOS Simulator.
-
-## Congratulations! :tada:
-
-You've successfully run and modified your React Native App. :partying_face:
-
-### Now what?
-
-- If you want to add this new React Native code to an existing application, check out the [Integration guide](https://reactnative.dev/docs/integration-with-existing-apps).
-- If you're curious to learn more about React Native, check out the [docs](https://reactnative.dev/docs/getting-started).
-
-# Troubleshooting
-
-If you're having issues getting the above steps to work, see the [Troubleshooting](https://reactnative.dev/docs/troubleshooting) page.
-
-# Learn More
-
-To learn more about React Native, take a look at the following resources:
-
-- [React Native Website](https://reactnative.dev) - learn more about React Native.
-- [Getting Started](https://reactnative.dev/docs/environment-setup) - an **overview** of React Native and how setup your environment.
-- [Learn the Basics](https://reactnative.dev/docs/getting-started) - a **guided tour** of the React Native **basics**.
-- [Blog](https://reactnative.dev/blog) - read the latest official React Native **Blog** posts.
-- [`@facebook/react-native`](https://github.com/facebook/react-native) - the Open Source; GitHub **repository** for React Native.
+| Triệu chứng | Cách xử lý |
+|---|---|
+| Home báo “Mất kết nối tới Server” / chấm đỏ | Backend chưa chạy, hoặc quên `npm run adb:reverse` (chạy lại mỗi lần khởi động máy ảo) |
+| Chat AI báo thiếu Gemini Key | Điền `GEMINI_API_KEY` trong `shopai-backend/.env` rồi khởi động lại backend |
+| Đăng nhập demo báo sai mật khẩu | `cd shopai-backend && npx prisma db seed` |
+| `npm install` báo ERESOLVE | Đảm bảo file `.npmrc` có mặt (repo đã kèm) |
+| Build lỗi `ninja: manifest 'build.ninja' still dirty` | Xóa thư mục `node_modules/react-native-reanimated/android/.cxx` rồi build lại |
+| Build báo thiếu SDK 36 | Android Studio → SDK Manager → cài *Android 16 (API 36)* + *Build-Tools 36.0.0* |
+| Màn hình đỏ “Unable to load script” | Metro chưa chạy (`npm start`) hoặc thiếu `adb reverse tcp:8081 tcp:8081` |

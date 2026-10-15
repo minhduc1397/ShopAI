@@ -1,0 +1,22 @@
+# Maestro E2E — luồng mua hàng trọn vẹn: giỏ → checkout PENDING → Pay → PAID
+appId: com.shopai
+name: Thêm giỏ → đặt hàng → thanh toán giả lập
+---
+- runFlow: login_home.yaml
+- tapOn:
+    id: add-prod_1
+- tapOn: 'Giỏ hàng'
+- assertVisible: 'Giỏ hàng \(1\)'
+- tapOn:
+    id: go-checkout
+- tapOn:
+    id: confirm-order
+- extendedWaitUntil:
+    visible: 'Đặt hàng thành công!'
+    timeout: 15000
+- tapOn: 'Xem hóa đơn & thanh toán'
+- tapOn:
+    id: pay-order
+- extendedWaitUntil:
+    visible: '✓ Đơn đã được thanh toán'
+    timeout: 15000

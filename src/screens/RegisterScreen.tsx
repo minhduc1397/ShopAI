@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, Pressable, ScrollView } from 'react-native';
+import { Text, StyleSheet, Pressable, ScrollView } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import ShopButton from '@components/ui/ShopButton';
 import ShopInput from '@components/ui/ShopInput';
@@ -10,7 +10,7 @@ import axiosClient from '@api/axiosClient';
 
 const RegisterScreen = () => {
   const navigation = useNavigation<any>();
-  const login = useAuthStore(state => state.login);
+  const login = useAuthStore((state) => state.login);
 
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -48,17 +48,14 @@ const RegisterScreen = () => {
       await login(response.data.accessToken);
     } catch (error: any) {
       const msg = error?.response?.data?.message;
-      setServerError(Array.isArray(msg) ? msg.join(', ') : msg ?? 'Đăng ký thất bại');
+      setServerError(Array.isArray(msg) ? msg.join(', ') : (msg ?? 'Đăng ký thất bại'));
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <ScrollView
-      contentContainerStyle={styles.container}
-      keyboardShouldPersistTaps="handled"
-    >
+    <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
       <Text style={styles.title}>Tạo tài khoản</Text>
       <Text style={styles.subtitle}>Đăng ký để mua sắm trên ShopAI</Text>
 

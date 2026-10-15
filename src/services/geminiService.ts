@@ -9,10 +9,7 @@ export type ChatTurn = {
 };
 
 /** Gọi NestJS /api/ai/chat — Server cầm Gemini Key bảo mật tuyệt đối */
-export const askShopAI = async (
-  question: string,
-  history: ChatTurn[] = [],
-): Promise<string> => {
+export const askShopAI = async (question: string, history: ChatTurn[] = []): Promise<string> => {
   const { data } = await axiosClient.post<{ reply: string }>('/api/ai/chat', {
     message: question,
     history: history.map((h) => ({
@@ -25,6 +22,11 @@ export const askShopAI = async (
 
 /** Chuyển thông báo lỗi kỹ thuật thành câu chữ mà người dùng đọc hiểu được. */
 export const toFriendlyError = (error: unknown): string => {
+  // Server Nest trả lý do cụ thể (VD "Server chưa cấu hình GEMINI_API_KEY") — ưu tiên hiển thị
+  const serverMsg = (error as { response?: { data?: { message?: unknown } } })?.response?.data?.message;
+  if (typeof serverMsg === 'string' && serverMsg.includes('GEMINI_API_KEY')) {
+    return 'Server chưa có Gemini API Key. Thêm GEMINI_API_KEY vào shopai-backend/.env rồi khởi động lại.';
+  }
   const msg = error instanceof Error ? error.message : String(error);
 
   if (msg.includes('429')) return 'Trợ lý đang bận (quá nhiều yêu cầu). Bạn đợi vài giây rồi thử lại nhé.';
@@ -32,7 +34,12 @@ export const toFriendlyError = (error: unknown): string => {
     return 'Mô hình AI đang quá tải tạm thời. Bạn đợi một chút rồi bấm Thử lại nhé.';
   if (msg.includes('API key') || msg.includes('401') || msg.includes('403'))
     return 'Lỗi xác thực với Server AI.';
-  if (msg.includes('Network') || msg.includes('fetch') || msg.includes('Network Error') || msg.includes('ECONNREFUSED'))
+  if (
+    msg.includes('Network') ||
+    msg.includes('fetch') ||
+    msg.includes('Network Error') ||
+    msg.includes('ECONNREFUSED')
+  )
     return 'Không kết nối được tới Server ShopAI. Bạn kiểm tra lại backend nhé.';
   if (msg.includes('bộ lọc an toàn')) return msg;
 

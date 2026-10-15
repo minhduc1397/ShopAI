@@ -6,6 +6,11 @@ const { getDefaultConfig, mergeConfig } = require('@react-native/metro-config');
  *
  * @type {import('@react-native/metro-config').MetroConfig}
  */
-const config = {};
+const config = {
+  resolver: {
+    // Backend NestJS nằm chung repo — Metro không được quét/đóng gói thư mục này
+    blockList: [/shopai-backend[/\\].*/],
+  },
+};
 
 module.exports = mergeConfig(getDefaultConfig(__dirname), config);

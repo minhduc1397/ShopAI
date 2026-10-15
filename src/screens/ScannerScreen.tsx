@@ -94,14 +94,10 @@ const ScannerScreen = ({ navigation }: any) => {
       <View style={styles.center}>
         <Text style={styles.deniedTitle}>Chưa có quyền Camera</Text>
         <Text style={styles.deniedDesc}>
-          ShopAI cần Camera để quét mã vạch sản phẩm. Ảnh chỉ được xử lý ngay trên máy
-          của bạn và không bao giờ được gửi đi đâu cả.
+          ShopAI cần Camera để quét mã vạch sản phẩm. Ảnh chỉ được xử lý ngay trên máy của bạn và không bao
+          giờ được gửi đi đâu cả.
         </Text>
-        <ShopButton
-          title="Mở Cài đặt"
-          onPress={openAppSettings}
-          style={{ width: 200, marginBottom: 12 }}
-        />
+        <ShopButton title="Mở Cài đặt" onPress={openAppSettings} style={{ width: 200, marginBottom: 12 }} />
         <ShopButton
           title="Quay lại"
           onPress={() => navigation.goBack()}
@@ -117,8 +113,8 @@ const ScannerScreen = ({ navigation }: any) => {
       <View style={styles.center}>
         <Text style={styles.stateText}>Thiết bị không có Camera sau!</Text>
         <Text style={styles.deniedDesc}>
-          Bạn có đang chạy trên máy ảo (Simulator/Emulator) không? Camera bắt buộc phải
-          chạy trên điện thoại thật.
+          Bạn có đang chạy trên máy ảo (Simulator/Emulator) không? Camera bắt buộc phải chạy trên điện thoại
+          thật.
         </Text>
         <ShopButton title="Quay lại" onPress={() => navigation.goBack()} style={{ width: 200 }} />
       </View>

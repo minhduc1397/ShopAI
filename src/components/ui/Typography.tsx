@@ -1,6 +1,6 @@
-import React, { memo } from "react";
-import { Text, TextStyle, StyleProp } from "react-native";
-import { COLORS, FONTS } from "@constants/theme";
+import React, { memo } from 'react';
+import { Text, TextStyle, StyleProp } from 'react-native';
+import { COLORS, FONTS } from '@constants/theme';
 
 type Variant = keyof typeof FONTS;
 
@@ -12,18 +12,9 @@ interface Props {
   numberOfLines?: number;
 }
 
-const Typography = ({
-  children,
-  variant = "body1",
-  color = COLORS.text,
-  style,
-  numberOfLines,
-}: Props) => {
+const Typography = ({ children, variant = 'body1', color = COLORS.text, style, numberOfLines }: Props) => {
   return (
-    <Text
-      numberOfLines={numberOfLines}
-      style={[FONTS[variant], { color }, style]}
-    >
+    <Text numberOfLines={numberOfLines} style={[FONTS[variant], { color }, style]}>
       {children}
     </Text>
   );

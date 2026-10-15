@@ -1,0 +1,24 @@
+# Maestro E2E — Chương 11. Chạy: maestro test .maestro/login_home.yaml
+# Yêu cầu: backend đang chạy + đã `npm run adb:reverse` + app bản debug đã cài trên máy ảo
+appId: com.shopai
+name: Đăng nhập demo → thấy Trang chủ có sản phẩm
+---
+- clearState
+- launchApp
+- extendedWaitUntil:
+    visible: 'Đăng nhập ngay'
+    timeout: 20000
+- tapOn:
+    id: login-email
+- inputText: demo@shopai.com
+- tapOn:
+    id: login-password
+- inputText: '123456'
+- hideKeyboard
+- tapOn: 'Đăng nhập ngay'
+- extendedWaitUntil:
+    visible: 'Server online'
+    timeout: 20000
+- assertVisible:
+    id: search-input
+- assertVisible: '.*sản phẩm'

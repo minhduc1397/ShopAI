@@ -1,12 +1,7 @@
 import React from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useCurrentLocation } from '@hooks/useCurrentLocation';
-import {
-  DEFAULT_SHIPPING_FEE,
-  WAREHOUSE_COORDS,
-  getDistanceKm,
-  getShippingTier,
-} from '@constants/shipping';
+import { DEFAULT_SHIPPING_FEE, WAREHOUSE_COORDS, getDistanceKm, getShippingTier } from '@constants/shipping';
 import { COLORS, SIZES } from '@constants/theme';
 
 const formatVnd = (value: number) => `${value.toLocaleString('vi-VN')}đ`;
@@ -19,7 +14,7 @@ const LocationBadge = () => {
     return (
       <View style={styles.badge}>
         <ActivityIndicator size="small" color={COLORS.primary} />
-        <Text style={styles.textMuted}>  Đang xác định vị trí của bạn...</Text>
+        <Text style={styles.textMuted}> Đang xác định vị trí của bạn...</Text>
       </View>
     );
   }

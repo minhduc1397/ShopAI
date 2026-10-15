@@ -27,9 +27,7 @@ export const useOrderStore = create<OrderState>()(
       addOrder: (order) => set((s) => ({ orders: [order, ...s.orders] })),
       markPaid: (orderId) =>
         set((s) => ({
-          orders: s.orders.map((o) =>
-            o.id === orderId ? { ...o, status: 'PAID' as const } : o,
-          ),
+          orders: s.orders.map((o) => (o.id === orderId ? { ...o, status: 'PAID' as const } : o)),
         })),
       getById: (orderId) => get().orders.find((o) => o.id === orderId),
     }),

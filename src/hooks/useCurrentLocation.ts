@@ -21,15 +21,12 @@ const requestLocationPermission = async (): Promise<boolean> => {
     return true;
   }
 
-  const granted = await PermissionsAndroid.request(
-    PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
-    {
-      title: 'ShopAI cần quyền vị trí',
-      message: 'Cho phép ShopAI biết vị trí để tính chính xác phí giao hàng tới nhà bạn.',
-      buttonPositive: 'Cho phép',
-      buttonNegative: 'Để sau',
-    },
-  );
+  const granted = await PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION, {
+    title: 'ShopAI cần quyền vị trí',
+    message: 'Cho phép ShopAI biết vị trí để tính chính xác phí giao hàng tới nhà bạn.',
+    buttonPositive: 'Cho phép',
+    buttonNegative: 'Để sau',
+  });
 
   // PermissionsAndroid trả về 3 giá trị: 'granted' | 'denied' | 'never_ask_again'
   if (granted === PermissionsAndroid.RESULTS.NEVER_ASK_AGAIN) {
@@ -90,9 +87,9 @@ export const useCurrentLocation = () => {
       },
       {
         enableHighAccuracy: false, // false = ưu tiên Wi-Fi/trạm phát sóng, nhanh & tiết kiệm pin.
-                                   // Tính phí ship chỉ cần chính xác vài trăm mét là quá đủ.
-        timeout: 15000,            // BẮT BUỘC có timeout, nếu không app treo vô hạn (Phần 7.7)
-        maximumAge: 60000,         // Chấp nhận toạ độ đã cache trong 60 giây gần nhất
+        // Tính phí ship chỉ cần chính xác vài trăm mét là quá đủ.
+        timeout: 15000, // BẮT BUỘC có timeout, nếu không app treo vô hạn (Phần 7.7)
+        maximumAge: 60000, // Chấp nhận toạ độ đã cache trong 60 giây gần nhất
       },
     );
   }, []);

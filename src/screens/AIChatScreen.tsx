@@ -11,6 +11,7 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useNavigation } from '@react-navigation/native';
 import ShopButton from '@components/ui/ShopButton';
 import { COLORS, SIZES } from '@constants/theme';
 import { AI_GREETING, AI_SUGGESTIONS } from '@constants/aiPrompt';
@@ -23,7 +24,11 @@ type Message = {
   status?: 'sent' | 'error'; // 'error' -> hiện nút Thử lại (Phần 8.10)
 };
 
+/** AI được dặn ghi mã sản phẩm dạng (prod_18) — tách ra để hiện nút mở nhanh */
+const extractProductIds = (text: string) => [...new Set(text.match(/prod_d+/g) ?? [])].slice(0, 3);
+
 export default function AIChatScreen() {
+  const navigation = useNavigation<any>();
   const [messages, setMessages] = useState<Message[]>([
     { id: 'greeting', text: AI_GREETING, isBot: true, status: 'sent' },
   ]);
@@ -115,6 +120,20 @@ export default function AIChatScreen() {
         </Text>
       </View>
 
+      {item.isBot && item.status === 'sent' && extractProductIds(item.text).length > 0 && (
+        <View style={styles.productLinks}>
+          {extractProductIds(item.text).map((id) => (
+            <Pressable
+              key={id}
+              style={styles.productLink}
+              onPress={() => navigation.navigate('ProductDetail', { productId: id })}
+            >
+              <Text style={styles.productLinkText}>Xem {id} →</Text>
+            </Pressable>
+          ))}
+        </View>
+      )}
+
       {item.status === 'error' && (
         <Pressable onPress={handleRetry} style={styles.retryBtn}>
           <Text style={styles.retryText}>🔄 Thử lại</Text>
@@ -149,7 +168,7 @@ export default function AIChatScreen() {
         keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
       >
         <View style={styles.header}>
-          <Text style={styles.headerTitle}>Nhân viên AI (Gemini 3.8)</Text>
+          <Text style={styles.headerTitle}>Trợ lý ShopAI ✨</Text>
           <Text style={styles.headerSub}>{isTyping ? 'Đang soạn tin...' : 'Đang hoạt động'}</Text>
         </View>
 
@@ -169,7 +188,7 @@ export default function AIChatScreen() {
               {isTyping && (
                 <View style={[styles.bubble, styles.botBubble, styles.typingBubble]}>
                   <ActivityIndicator size="small" color="#666" />
-                  <Text style={styles.typingText}>  Trợ lý đang soạn tin...</Text>
+                  <Text style={styles.typingText}> Trợ lý đang soạn tin...</Text>
                 </View>
               )}
             </>
@@ -183,8 +202,8 @@ export default function AIChatScreen() {
             onChangeText={setInputText}
             placeholder="Nhập câu hỏi tư vấn..."
             placeholderTextColor="#888"
-            maxLength={500}          // Chặn user dán cả cuốn tiểu thuyết (Phần 8.11, chiến lược #2)
-            editable={!isTyping}     // Khoá ô nhập khi đang chờ AI
+            maxLength={500} // Chặn user dán cả cuốn tiểu thuyết (Phần 8.11, chiến lược #2)
+            editable={!isTyping} // Khoá ô nhập khi đang chờ AI
             multiline
             onSubmitEditing={() => handleSend()}
           />
@@ -192,7 +211,7 @@ export default function AIChatScreen() {
             title="Gửi"
             onPress={() => handleSend()}
             isLoading={isTyping}
-            disabled={!canSend}      // Ô rỗng hoặc đang chờ -> nút mờ đi, không bấm được
+            disabled={!canSend} // Ô rỗng hoặc đang chờ -> nút mờ đi, không bấm được
             style={{ width: 80, height: 40, opacity: canSend ? 1 : 0.5 }}
           />
         </View>
@@ -214,6 +233,15 @@ const styles = StyleSheet.create({
   errorBubble: { backgroundColor: '#FFE0E0', borderWidth: 1, borderColor: COLORS.error },
   typingBubble: { flexDirection: 'row', alignItems: 'center' },
   typingText: { color: '#666', fontSize: 13 },
+
+  productLinks: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: -4, marginBottom: 12 },
+  productLink: {
+    backgroundColor: COLORS.primarySoft,
+    borderRadius: 999,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+  },
+  productLinkText: { color: COLORS.primary, fontWeight: '700', fontSize: 12 },
 
   retryBtn: { alignSelf: 'flex-start', marginBottom: 12, paddingHorizontal: 4 },
   retryText: { color: COLORS.primary, fontWeight: 'bold', fontSize: 13 },

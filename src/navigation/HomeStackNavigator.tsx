@@ -17,26 +17,10 @@ const Stack = createNativeStackNavigator<HomeStackParamList>();
 const HomeStackNavigator = () => {
   return (
     <Stack.Navigator initialRouteName="Home">
-      <Stack.Screen
-        name="Home"
-        component={HomeScreen}
-        options={{ headerShown: false }}
-      />
-      <Stack.Screen
-        name="ProductDetail"
-        component={ProductDetailScreen}
-        options={{ title: 'Chi tiết' }}
-      />
-      <Stack.Screen
-        name="Scanner"
-        component={ScannerScreen}
-        options={{ headerShown: false }}
-      />
-      <Stack.Screen
-        name="AIChat"
-        component={AIChatScreen}
-        options={{ title: 'Tư vấn AI' }}
-      />
+      <Stack.Screen name="Home" component={HomeScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="ProductDetail" component={ProductDetailScreen} options={{ title: 'Chi tiết' }} />
+      <Stack.Screen name="Scanner" component={ScannerScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="AIChat" component={AIChatScreen} options={{ title: 'Tư vấn AI' }} />
     </Stack.Navigator>
   );
 };

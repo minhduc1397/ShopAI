@@ -1,0 +1,30 @@
+# compiled output
+/dist
+/node_modules
+/build
+
+# Logs
+logs
+*.log
+npm-debug.log*
+
+# OS / IDE
+.DS_Store
+/.idea
+.vscode/*
+
+# Tests
+/coverage
+
+# dotenv — KHÔNG commit bí mật
+.env
+.env.local
+
+# Prisma — Database SQLite cục bộ (migrations/ thì PHẢI commit)
+/prisma/dev.db
+/prisma/dev.db-journal
+
+# TypeScript incremental
+*.tsbuildinfo
+/prisma/test.db
+/prisma/test.db-journal

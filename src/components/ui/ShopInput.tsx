@@ -1,13 +1,7 @@
-import React, { memo } from "react";
-import {
-  View,
-  TextInput,
-  StyleSheet,
-  TextInputProps,
-  ViewStyle,
-} from "react-native";
-import Typography from "./Typography";
-import { COLORS, SIZES } from "@constants/theme";
+import React, { memo } from 'react';
+import { View, TextInput, StyleSheet, TextInputProps, ViewStyle } from 'react-native';
+import Typography from './Typography';
+import { COLORS, SIZES } from '@constants/theme';
 
 interface Props extends TextInputProps {
   label?: string;

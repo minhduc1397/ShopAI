@@ -1,0 +1,46 @@
+// prisma/schema.prisma
+
+datasource db {
+  provider = "sqlite"                // Đổi thành "postgresql" khi lên Production
+  url      = env("DATABASE_URL")     // Đọc từ .env, KHÔNG hardcode đường dẫn
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique          // Không cho 2 tài khoản trùng email
+  password  String                    // Chuỗi ĐÃ HASH bằng bcrypt
+  name      String?
+  createdAt DateTime @default(now())
+  orders    Order[]
+}
+
+model Product {
+  id        String   @id              // Giữ nguyên id dạng "prod_1" khi seed
+  name      String
+  price     Int                       // Tiền VND số nguyên, KHÔNG dùng Float
+  image     String
+  createdAt DateTime @default(now())
+}
+
+model Order {
+  id        String      @id           // "ORD-<timestamp>"
+  userId    String
+  user      User        @relation(fields: [userId], references: [id])
+  total     Int                       // Con số SERVER tự tính (Phần 9.12)
+  status    String      @default("PENDING")
+  createdAt DateTime    @default(now())
+  items     OrderItem[]
+}
+
+model OrderItem {
+  id        String  @id @default(uuid())
+  orderId   String
+  order     Order   @relation(fields: [orderId], references: [id])
+  productId String                    // Cố ý không @relation tới Product (giá snapshot)
+  quantity  Int
+  price     Int                       // Giá SNAPSHOT tại thời điểm đặt hàng
+}

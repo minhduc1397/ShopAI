@@ -16,7 +16,7 @@ const LoginScreen = () => {
   const [loading, setLoading] = useState(false);
   const [serverError, setServerError] = useState<string | null>(null);
 
-  const login = useAuthStore(state => state.login);
+  const login = useAuthStore((state) => state.login);
 
   const validate = () => {
     const next: { email?: string; password?: string } = {};
@@ -43,8 +43,10 @@ const LoginScreen = () => {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>ShopAI</Text>
-      <Text style={styles.subtitle}>Vui lòng đăng nhập để tiếp tục</Text>
+      <Text style={styles.title}>
+        Shop<Text style={styles.titleAccent}>AI</Text>
+      </Text>
+      <Text style={styles.subtitle}>Góc công nghệ của bạn — đăng nhập để tiếp tục</Text>
 
       <ShopInput
         label="Email"
@@ -54,6 +56,7 @@ const LoginScreen = () => {
         error={errors.email}
         autoCapitalize="none"
         keyboardType="email-address"
+        testID="login-email"
       />
       <ShopInput
         label="Mật khẩu"
@@ -62,16 +65,27 @@ const LoginScreen = () => {
         onChangeText={setPassword}
         error={errors.password}
         secureTextEntry
+        testID="login-password"
       />
 
       {serverError && <Text style={styles.serverError}>⚠️ {serverError}</Text>}
 
-      <ShopButton
-        title="Đăng nhập ngay"
-        onPress={handleLogin}
-        isLoading={loading}
-        style={styles.loginBtn}
-      />
+      <ShopButton title="Đăng nhập ngay" onPress={handleLogin} isLoading={loading} style={styles.loginBtn} />
+
+      {__DEV__ && (
+        // Tiện demo trước hội đồng: điền sẵn tài khoản seed của backend (npx prisma db seed)
+        <Pressable
+          testID="fill-demo"
+          onPress={() => {
+            setEmail('demo@shopai.com');
+            setPassword('123456');
+            setErrors({});
+          }}
+          style={styles.demoLink}
+        >
+          <Text style={styles.demoText}>⚡ Dùng tài khoản demo</Text>
+        </Pressable>
+      )}
 
       <Pressable onPress={() => navigation.navigate('Register')} style={styles.registerLink}>
         <Text style={styles.registerLinkText}>
@@ -92,7 +106,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 40,
     fontWeight: '900',
-    color: COLORS.primary,
+    color: COLORS.text,
     textAlign: 'center',
     marginBottom: 10,
   },
@@ -102,7 +116,10 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginBottom: 32,
   },
+  titleAccent: { color: COLORS.primary },
   loginBtn: { marginTop: 8 },
+  demoLink: { marginTop: 16, alignItems: 'center' },
+  demoText: { color: COLORS.accent, fontWeight: '700' },
   serverError: {
     color: COLORS.error,
     fontSize: SIZES.body2,

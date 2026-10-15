@@ -7,7 +7,6 @@ import { useAuthStore } from '@store/useAuthStore';
 export const APP_LOCK_TIMEOUT_MS = 2 * 60 * 1000;
 
 type Params = {
-  isUnlocked: boolean;
   setIsUnlocked: (value: boolean) => void;
 };
 
@@ -17,7 +16,7 @@ type Params = {
  * cổng khoá cũ chỉ kiểm tra lúc App KHỞI ĐỘNG LẠI, còn hook này canh gác
  * ngay cả khi App chỉ tạm rời sang nền rồi quay lại (chưa từng bị tắt hẳn).
  */
-export const useAppLock = ({ isUnlocked, setIsUnlocked }: Params) => {
+export const useAppLock = ({ setIsUnlocked }: Params) => {
   const token = useAuthStore((state) => state.token);
   // Mốc thời gian lúc App RỜI sang nền — dùng useRef vì đổi giá trị không cần re-render
   const backgroundedAtRef = useRef<number | null>(null);

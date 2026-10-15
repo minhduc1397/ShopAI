@@ -82,8 +82,8 @@ android {
         applicationId "com.shopai"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 1
-        versionName "1.0"
+        versionCode 2
+        versionName "1.1.0"
     }
     signingConfigs {
         debug {
@@ -92,17 +92,26 @@ android {
             keyAlias 'androiddebugkey'
             keyPassword 'android'
         }
+        // Chương 10 — Keystore release riêng. Mật khẩu KHÔNG nằm trong repo:
+        // khai báo trong ~/.gradle/gradle.properties (hoặc biến môi trường cùng tên), xem README.
+        release {
+            if (project.hasProperty('SHOPAI_UPLOAD_STORE_FILE')) {
+                storeFile file(SHOPAI_UPLOAD_STORE_FILE)
+                storePassword SHOPAI_UPLOAD_STORE_PASSWORD
+                keyAlias SHOPAI_UPLOAD_KEY_ALIAS
+                keyPassword SHOPAI_UPLOAD_KEY_PASSWORD
+            }
+        }
     }
     buildTypes {
         debug {
             signingConfig signingConfigs.debug
         }
         release {
-            // Caution! In production, you need to generate your own keystore file.
-            // see https://reactnative.dev/docs/signed-apk-android.
-            signingConfig signingConfigs.debug
+            // Có keystore riêng thì ký bằng nó; máy chưa cấu hình (VD laptop thi) vẫn build được bằng khóa debug
+            signingConfig project.hasProperty('SHOPAI_UPLOAD_STORE_FILE') ? signingConfigs.release : signingConfigs.debug
             minifyEnabled enableProguardInReleaseBuilds
-            proguardFiles getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro"
+            proguardFiles getDefaultProguardFile("proguard-android.txt"), "proguard-rules.pro"
         }
     }
 }
