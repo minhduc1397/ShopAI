@@ -23,9 +23,10 @@ npm install                 # cài app (file .npmrc đã bật legacy-peer-deps,
 npm run backend:install     # cài backend + tự tạo .env + Database SQLite + seed tài khoản demo & 25 sản phẩm
 ```
 
-> Muốn demo **chat AI**: mở `shopai-backend/.env` (vừa được tự tạo), điền `GEMINI_API_KEY`
-> (lấy tại https://aistudio.google.com/app/apikey) rồi khởi động lại backend. Không có key thì mọi thứ khác vẫn chạy,
-> riêng chat AI báo “Server chưa có Gemini API Key”.
+> Muốn demo **chat AI**: mở `shopai-backend/.env` (vừa được tự tạo), điền `DEEPSEEK_API_KEY`
+> (https://platform.deepseek.com/api_keys — tài khoản phải **còn số dư**) hoặc `GEMINI_API_KEY`, rồi khởi động lại backend.
+> Có key DeepSeek thì ưu tiên DeepSeek; kiểm tra đang dùng gì tại `http://localhost:3000/api/ai/status`.
+> **Không commit key lên GitHub** — file `.env` đã bị `.gitignore` chặn; mang key sang laptop thi bằng cách tự gõ lại.
 
 **Terminal 1 — Backend**
 ```bash
@@ -83,6 +84,7 @@ Cách sửa: hạ RN về **0.86.3** đúng tổ hợp chính thức của Expo 
 - **Catalog riêng 25 món đồ công nghệ** (`shopai-backend/src/product/product.data.ts`): ảnh được soi từng tấm cho khớp đúng món (bản cũ có Rubik hiện ảnh Bitcoin, dầu bôi trơn hiện vỉ thuốc…), có hãng, danh mục, điểm đánh giá, tồn kho.
 - **Tìm kiếm không dấu + lọc danh mục phía Server** (`GET /api/products?q=&category=`, `GET /api/products/categories`).
 - **Trợ lý AI biết hàng thật**: Server ghép catalog vào System Prompt → AI chỉ gợi ý món đang bán, đúng giá; app biến mã `prod_xx` trong câu trả lời thành nút mở sản phẩm.
+- **Đổi nhà cung cấp AI không sửa code**: DeepSeek (mặc định khi có key, API kiểu OpenAI) hoặc Gemini — chọn bằng `.env`. Prompt cố định để DeepSeek tự cache, giới hạn 400 token, timeout 30s, báo lỗi rõ (sai key 401, hết số dư 402, quá tải 429).
 - **Luật giỏ hàng**: tối đa 10 món cùng loại và không vượt tồn kho Server báo.
 - **Tab Tài khoản** + `GET /api/auth/me` (số đơn, tổng đã thanh toán), công tắc rung phản hồi.
 - **Bộ nhận diện riêng** tím indigo + vàng hổ phách, Dark Mode áp dụng cả header/tab bar và **nhớ lựa chọn**.
@@ -102,7 +104,7 @@ Cách sửa: hạ RN về **0.86.3** đúng tổ hợp chính thức của Expo 
 | Checkout `useMutation` + Bearer → PENDING; chỉ xóa giỏ khi thành công | `CheckoutScreen`, `api/axiosClient.ts` |
 | Orders list/detail/pay → PAID; 401 khi thiếu token; Server tự tính tiền | `OrdersScreen`, `OrderDetailScreen` · Nest `src/order/` |
 | Prisma + SQLite, restart không mất đơn | `shopai-backend/prisma/` |
-| AI proxy, không còn Gemini Key/SDK trong app | Nest `src/ai/` · app chỉ còn `services/geminiService.ts` gọi `/api/ai/chat` |
+| AI proxy (DeepSeek/Gemini), không còn key/SDK AI trong app | Nest `src/ai/` · app chỉ còn `services/geminiService.ts` gọi `/api/ai/chat` |
 | Swagger, ValidationPipe, Helmet, Rate limit, `.env.example` | `shopai-backend/src/main.ts`, `app.module.ts` |
 | Dark Mode, Design System, Button variants | `contexts/ThemeContext.tsx`, `components/ui/ShopButton.tsx` |
 | FlashList + Reanimated + SafeArea | `HomeScreen` (FadeInDown) |
@@ -173,7 +175,8 @@ bản Release tự ký bằng khóa debug để vẫn cài thử được.
 | Triệu chứng | Cách xử lý |
 |---|---|
 | Home báo “Mất kết nối tới Server” / chấm đỏ | Backend chưa chạy, hoặc quên `npm run adb:reverse` (chạy lại mỗi lần khởi động máy ảo) |
-| Chat AI báo thiếu Gemini Key | Điền `GEMINI_API_KEY` trong `shopai-backend/.env` rồi khởi động lại backend |
+| Chat AI báo “chưa cấu hình API key AI” | Điền `DEEPSEEK_API_KEY` (hoặc `GEMINI_API_KEY`) trong `shopai-backend/.env` rồi khởi động lại backend |
+| Chat AI báo “Tài khoản DeepSeek đã hết số dư” (402) | Nạp tiền tại https://platform.deepseek.com/top_up, hoặc dùng `GEMINI_API_KEY` + `AI_PROVIDER=gemini` |
 | Đăng nhập demo báo sai mật khẩu | `cd shopai-backend && npx prisma db seed` |
 | `npm install` báo ERESOLVE | Đảm bảo file `.npmrc` có mặt (repo đã kèm) |
 | Build lỗi `ninja: manifest 'build.ninja' still dirty` | Xóa thư mục `node_modules/react-native-reanimated/android/.cxx` rồi build lại |

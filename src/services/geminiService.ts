@@ -8,7 +8,7 @@ export type ChatTurn = {
   text?: string;
 };
 
-/** Gọi NestJS /api/ai/chat — Server cầm Gemini Key bảo mật tuyệt đối */
+/** Gọi NestJS /api/ai/chat — Server cầm key DeepSeek/Gemini, App không hề biết key */
 export const askShopAI = async (question: string, history: ChatTurn[] = []): Promise<string> => {
   const { data } = await axiosClient.post<{ reply: string }>('/api/ai/chat', {
     message: question,
@@ -22,10 +22,12 @@ export const askShopAI = async (question: string, history: ChatTurn[] = []): Pro
 
 /** Chuyển thông báo lỗi kỹ thuật thành câu chữ mà người dùng đọc hiểu được. */
 export const toFriendlyError = (error: unknown): string => {
-  // Server Nest trả lý do cụ thể (VD "Server chưa cấu hình GEMINI_API_KEY") — ưu tiên hiển thị
-  const serverMsg = (error as { response?: { data?: { message?: unknown } } })?.response?.data?.message;
-  if (typeof serverMsg === 'string' && serverMsg.includes('GEMINI_API_KEY')) {
-    return 'Server chưa có Gemini API Key. Thêm GEMINI_API_KEY vào shopai-backend/.env rồi khởi động lại.';
+  // Server Nest đã dịch lý do sang tiếng Việt (chưa có key, sai key, hết số dư DeepSeek, timeout…)
+  // — các lỗi cấu hình/tài khoản này hiện nguyên văn để người demo biết sửa ở đâu
+  const res = (error as { response?: { status?: number; data?: { message?: unknown } } })?.response;
+  const serverMsg = res?.data?.message;
+  if (typeof serverMsg === 'string' && [401, 402, 503, 504].includes(res?.status ?? 0)) {
+    return `⚙️ ${serverMsg}`;
   }
   const msg = error instanceof Error ? error.message : String(error);
 
